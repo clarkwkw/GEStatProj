@@ -89,3 +89,23 @@ chartoNumeric <- function(dfCol){
   }
   return (dfCol)
 }
+
+#This func can extract all columns in df that contains numeric values
+getNumericMatrix <- function (df){
+  #For every columns in df, check if it is numeric, if it is not, turn all of its values to NA
+  df <- lapply(df, function(x){
+    if(mode(x[1]) == "numeric"){
+      return(x)
+    }
+    return (NA)
+  })
+  #Combine the result generated above
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  
+  #Remove all columns that only contain NAs (i.e. non-numeric columns)
+  df <- df[, colSums(is.na(df)) != nrow(df), drop = FALSE]
+  
+  #Finally, convert the dataframe into matrix
+  df <- data.matrix(df, rownames.force = TRUE)
+  return (df)
+}
