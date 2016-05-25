@@ -1,7 +1,7 @@
 source("utilities.R")
 
 #Import csv file, auto-convert N/A as NA, preserve original column names
-rawdata <- read.csv("1415T2 Data (0924 version_ for student trial).csv", header = T, sep = ",", na.strings = c("N/A"), check.names = F)
+rawdata <- read.csv("1415T2 Data (0924 version_ for student trial).csv", header = TRUE, sep = ",", na.strings = c("N/A"), check.names = FALSE, stringsAsFactors = FALSE)
 
 #Remove empty rows
 rawdata <- rawdata[rowSums(is.na(rawdata) | rawdata == "") != ncol(rawdata),]
@@ -46,5 +46,6 @@ print(paste("No. of invalid records: ", length(unique(invalidDF$"Tag Number")), 
 print(paste("No. of invalid cells: ", nrow(invalidDF), sep = ""))
 write.csv(invalidDF, file = "invalidData.csv", row.names = FALSE)
 
-#Convert each column to suitable datatype
-rawdata[["Name"]] <- as.character(rawdata[["Name"]])
+#Convert columns to numeric, unless it contains character value
+rawdata <- lapply(rawdata, function(x) chartoNumeric(x))
+rawdata <- as.data.frame(rawdata, check.names = FALSE, stringsAsFactors = FALSE)

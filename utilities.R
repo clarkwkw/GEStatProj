@@ -40,8 +40,11 @@ checkdata <- function(df, rng, colname){
   
   #Set invalid cells in rawdata to NA
   df[(df[[colname]] %in% rng) == FALSE,colname] <- NA
-  rawdata<<-df
   
+  #Some columns are saved as factor, remove unused levels if applicable
+  if(length(levels(df[[colname]])))
+    df[[colname]] <- droplevels(df[[colname]])
+  rawdata<<-df
   return (tmpdf)
 }
 
@@ -49,7 +52,7 @@ checkdata <- function(df, rng, colname){
 #df_Amber, df_Andy, df_Balwin, ...
 #while generateRecordsByTeacher(rawdata, "", "data") will generate
 #Amber_data, Andy_data, Balwin_data, ...
-generateRecordsByTeacher <- function(df, dfPrefix, dfSuffix){
+generateRecordsByTeacher <- function(df, dfPrefix = "", dfSuffix = ""){
   #Split the orginal dataframe according to teachers' names, dfs will be a list of dataframes
   dfs <- split(df, f = df$"Name")
   
@@ -70,4 +73,19 @@ generateRecordsByTeacher <- function(df, dfPrefix, dfSuffix){
       #assign dataframe as a dataframe global variable whose name is dfname
       assign(dfname, x, envir = .GlobalEnv)
   }))
+}
+
+#Convert strings that contain numbers to numeric
+#If any element in dfCol cannot be converted, the conversion will be cancelled
+chartoNumeric <- function(dfCol){
+  if(mode(dfCol[1]) == "character"){
+    
+    #Check if all elements (except NA values) are convertible to numeric
+    if(all(suppressWarnings(!is.na(as.numeric(dfCol[!is.na(dfCol)]))))){
+      
+      #Convert to numeric
+      dfCol<-suppressWarnings(as.numeric(dfCol))
+    }
+  }
+  return (dfCol)
 }
