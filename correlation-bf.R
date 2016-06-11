@@ -12,7 +12,7 @@ questions <- getFullRows(bfSettingDF["Var"])
 #Questions is a vector of column names, where these columns are questions that may be correlated
 #ResultLimit is a numeric value which limits the maximum number of related question that the function should return
 #MinRecord is a numeric value, if number of records of a group is less than minRecord, that group will be ignored
-#IsPositive is a boolean value, which indicates where the function is finding highly positive correlation or highly negative correlation
+#IsPositive is a boolean value, which indicates where the function ranks the correlations from 1 to -1 (TRUE) or -1 to 1 (FALSE) 
 
 #Example: grouping <- c("Faculty", "No Science")
 #         questions <- c("Q1 Change", "Q2 Change", "Q3 Change")
