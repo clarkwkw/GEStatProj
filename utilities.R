@@ -109,3 +109,7 @@ getNumericMatrix <- function (df){
   df <- data.matrix(df, rownames.force = TRUE)
   return (df)
 }
+
+getFullRows <- function(df){
+  return(df[rowSums(is.na(df) | df == "")  == 0,])
+}
