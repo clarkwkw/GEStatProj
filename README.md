@@ -8,3 +8,6 @@
 `rawdata <- read.csv("1415T2 Data (0924 version_ for student trial).csv"...`
 , substitute "1415T2 Data (0924 version_ for student trial).csv" by your own csv file name
 5. Run the script.
+
+## correlation-bf.R (generateCor)
+Please refer to the [wiki page] (https://github.com/clarkwkw/GEStatProj/wiki/Brute-Force-Search-Algorithm-for-Correlation) for more information.
