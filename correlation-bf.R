@@ -28,7 +28,7 @@ questions <- getFullRows(bfSettingDF["Var"])
 #If the number of valid records belong to the grouping is less than 30, the correlation will be ignored
 #At the end, the 10 highest correlation combination will be returned
 generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive){
-  source("priorityQueue.R")
+  source("dataStructure/priorityQueue.R")
   #Initialize a data structure for storing result
   Tuple <- setRefClass("Tuple",
                        fields = list(col1 = "character", col2 = "character", groupCol = "character", group = "character", correlation = "numeric", numberOfRecord = "numeric")
@@ -37,7 +37,7 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive)
   TupleCmp <- function(a, b){
     return (a$correlation < b$correlation)
   }
-  
+
   #Initialize a priority queue for storing correlations
   resultQ <- PriorityQueue$new("Tuple", customComparator = TupleCmp)
   
@@ -64,9 +64,11 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive)
         if(nrow(dfWithTwoColsFiltered) >= minRecord){
           #Calculate correlation
           tmpCor <- cor(dfWithTwoColsFiltered[x[1]], dfWithTwoColsFiltered[x[2]], use = "na.or.complete", method = "pearson")
-        
+
+          if(!isPositive)tmpCor <- -1*tmpCor
+          
           #If it is higher than the lowest correlation in the queue, add it into the queue
-          if(!is.na(tmpCor) && (resultQ$size < resultLimit || tmpCor > (resultQ$front())$correlation)){
+          if(!is.na(tmpCor) && (resultQ$size < resultLimit ||  tmpCor > (resultQ$front())$correlation)){
             tmpTuple <- Tuple$new(col1 = x[1], col2 = x[2], groupCol = y, group = as.character(z), correlation = as.numeric(tmpCor), numberOfRecord = nrow(dfWithTwoColsFiltered))
             resultQ$insert(tmpTuple)
             #If there is any excess correlation, remove it
@@ -80,10 +82,12 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive)
   })
   
   #Turn the result into an organized manner
+  negation <- 1
+  if(!isPositive)negation <- -1
   resultDF <- data.frame(Col1 = character(), Col2 = character(), groupCol = character(), group = character(), correlation = numeric(), numberOfRecord = numeric(), check.names = FALSE, stringsAsFactors = FALSE)
   while(resultQ$size){
     tmpTuple <- resultQ$pop()
-    tmpRow <- list(Col1 = tmpTuple$col1, Col2 = tmpTuple$col2, groupCol = tmpTuple$groupCol, group = tmpTuple$group, correlation = tmpTuple$correlation, numberOfRecord = tmpTuple$numberOfRecord)
+    tmpRow <- list(Col1 = tmpTuple$col1, Col2 = tmpTuple$col2, groupCol = tmpTuple$groupCol, group = tmpTuple$group, correlation = negation*tmpTuple$correlation, numberOfRecord = tmpTuple$numberOfRecord)
     resultDF[nrow(resultDF)+1, ]<-tmpRow
   }
   return (resultDF)
