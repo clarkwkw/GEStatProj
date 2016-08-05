@@ -28,6 +28,7 @@ questions <- getFullRows(bfSettingDF["Var"])
 #If the number of valid records belong to the grouping is less than 30, the correlation will be ignored
 #At the end, the 10 highest correlation combination will be returned
 generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive){
+
   source("dataStructure/priorityQueue.R")
   #Initialize a data structure for storing result
   Tuple <- setRefClass("Tuple",
@@ -69,8 +70,11 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive)
           
           #If it is higher than the lowest correlation in the queue, add it into the queue
           if(!is.na(tmpCor) && (resultQ$size < resultLimit ||  tmpCor > (resultQ$front())$correlation)){
+
             tmpTuple <- Tuple$new(col1 = x[1], col2 = x[2], groupCol = y, group = as.character(z), correlation = as.numeric(tmpCor), numberOfRecord = nrow(dfWithTwoColsFiltered))
+ 
             resultQ$insert(tmpTuple)
+
             #If there is any excess correlation, remove it
             if(resultQ$size > resultLimit){
               resultQ$pop()

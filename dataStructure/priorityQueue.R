@@ -59,7 +59,8 @@ PriorityQueue <- setRefClass("PriorityQueue",
                                  
                                  #Increase the size by 1, assign input value to the end of the queue
                                  size <<- size +1
-                                 values[size] <<- x
+                                 tmpList <- list(x)
+                                 values[size] <<- tmpList
                                  index <- size
                                  
                                  #Compare the current node with its parent, if the they are in the wrong order, swap them
