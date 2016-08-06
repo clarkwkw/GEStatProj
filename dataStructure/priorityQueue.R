@@ -107,6 +107,18 @@ PriorityQueue <- setRefClass("PriorityQueue",
                                     }else break
                                   }
                                   return(result)
-                                }
+                                },
+                               
+                               toList = function(){
+                                 if(size == 0)return()
+                                 result <- vector("list", size)
+                                 count <- 1
+                                 while(size){
+                                   result[count] <- list(front())
+                                   pop()
+                                   count <- count+1
+                                 }
+                                 return(result)
+                               }
                              )
                              )
