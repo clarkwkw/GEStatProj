@@ -1,14 +1,16 @@
+# Import some settings for testing
 bfSettingDF <- read.csv("correlationVar.csv", header = TRUE, sep = ",", check.names = FALSE, stringsAsFactors = FALSE)
 grouping <- getFullRows(bfSettingDF["Grouping"])
 questions <- getFullRows(bfSettingDF["Var"])
 
-#Initialize a data structure for storing result
+# Initialize a data structure for storing result
 SimpleTuple <- setRefClass("SimpleTuple",
                            fields = list(col1 = "character", col2 = "character", group = "character", correlation = "numeric", numberOfRecord = "numeric")
 )
 
 
 generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive, isReadable = FALSE){
+  # Import priority queue for processing tuples
   source("dataStructure/priorityQueue.R")
   
   # Initialize a function for comparing correlation
@@ -16,6 +18,7 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
     return (a$correlation < b$correlation)
   }
   
+  # A function specifies how to format the output to semi-readable manner
   toReadable <- function(x){
     return (paste(x$group, "=", round(x$correlation, digits = 2), "; "))
   }
@@ -24,7 +27,10 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
   combination <- combn(questions, 2)
   
   # Divide the records into distinct subsets and calculate correlation for all combination of questions
+  # ** Since the number of grouping question is variable, it needs to be recursively subsetted in another function
   tuples <- subsetNCalculate(rawdata, grouping, combination, minRecord)
+  
+  # After the above function call, correaltion of all groups under all combination of question is calculated and saved in tuples list
   
   # Create an empty matrix for processing the tuples
   resultMatrix <- matrix(list(), nrow = length(questions), ncol = length(questions))
@@ -38,13 +44,15 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
     if(is.null(resultMatrix[[x$col1, x$col2]])){
       resultMatrix[[x$col1, x$col2]] <<- PriorityQueue$new("SimpleTuple", customComparator = SimpleTupleCmp)
     }
+    
+    # If it we need to find out the smallest correlation, we need to negate all correlation, so that the same algorithm can be reused
     if(!isPositive){
       x$correlation <- x$correlation * -1
     }
-    # If 
+    
+    # The tuple will be added to the priority queue of the corresponding question, if
     #   1. the number of tuples in the queue is less than resultLimit, OR
     #   2. the correlation of new tuple is larger than the smallest tuple in the queue
-    # Add the tuple into the queue
     if(resultMatrix[[x$col1, x$col2]]$size < resultLimit || resultMatrix[[x$col1, x$col2]]$front()$correlation < x$correlation){
       resultMatrix[[x$col1, x$col2]]$insert(x)
     }
@@ -57,33 +65,34 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
   
   # Convert priority queue in each cell into a simple sorted list/ readable context
   result <- apply(resultMatrix, 2, FUN = function(x){
-    
     result <- lapply(x, function(y){
-      
+      # If there is no priority created, it is either due to:
+      # 1. it is in the lower triangler matrix
+      # 2. there is no grouping which has "valid" correlation coefficient
+      # In both cases, they can be presented as "NULL"
       if(class(y) == "NULL"){
         return(NULL)
       }
       
-      # Convert queue to list
+      # Convert priority queue into list
       tmpResult<-y$toList()
       
+      # Negate the correlation back to original one if it is negated before
       if(!isPositive){
         sapply(tmpResult, function(x){
           x$correlation<-x$correlation * -1
           return(x)
         })
       }
+      
       if(isReadable == FALSE){
         return(tmpResult)
       }else{
         
-        #If isReadable is TRUE, further convert it into readable context
+        #If isReadable is TRUE, further convert it into readable context by toReadable function
         return(do.call(paste, lapply(tmpResult, FUN = toReadable)))
       }
-      
-      
     })
-    
 
     return (result)
   })
@@ -110,9 +119,11 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
     
     # Correlation is calculated for each combination of question
     result <- apply(combination, 2, function(x){
-      
+
       tmpCor <- as.numeric(cor(rawDF[x[1]], rawDF[x[2]], use = "na.or.complete", method = "pearson"))
+      
       if(!is.na(tmpCor)){
+        
         # Result is packed in a "SimpleTuple"
         tmpTuple <- SimpleTuple$new(col1 = x[1], col2 = x[2], group = identifier, correlation = tmpCor, numberOfRecord = nrow(rawDF))
         return (tmpTuple)

@@ -109,6 +109,8 @@ PriorityQueue <- setRefClass("PriorityQueue",
                                   return(result)
                                 },
                                
+                               #This function converts remaining elements in the queue into a sorted list.
+                               #Once it is converted, the original queue will be empty
                                toList = function(){
                                  if(size == 0)return()
                                  result <- vector("list", size)
