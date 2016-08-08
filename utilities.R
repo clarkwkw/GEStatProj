@@ -20,8 +20,11 @@ checkdata <- function(df, rng, colname){
     rng <- c(rng) #method 2
   
   #try to convert rng vector to numeric if possible
-  if(all(suppressWarnings(!is.na(as.numeric(rng))))) 
+  numericConvertible <- FALSE
+  if(all(suppressWarnings(!is.na(as.numeric(rng))))){
     rng<-as.numeric(rng)
+    numericConvertible <- TRUE
+  } 
   
   #add the NA value back to the rng vector if necessary
   if (isNAValue) 
@@ -44,6 +47,12 @@ checkdata <- function(df, rng, colname){
   #Some columns are saved as factor, remove unused levels if applicable
   if(length(levels(df[[colname]])))
     df[[colname]] <- droplevels(df[[colname]])
+  
+  #Some columns can be converted into numberic
+  if(numericConvertible){
+    print(paste(colname, "is converted."))
+    df[, colname] <- as.numeric(df[,colname])
+  }
   rawdata<<-df
   return (tmpdf)
 }

@@ -1,7 +1,7 @@
 source("utilities.R")
 
 #Import csv file, auto-convert N/A as NA, preserve original column names
-rawdata <- read.csv("1415T2 Data (0924 version_ for student trial).csv", header = TRUE, sep = ",", na.strings = c("N/A"), check.names = FALSE, stringsAsFactors = FALSE)
+rawdata <- read.csv("combineddata.csv", header = TRUE, sep = ",", na.strings = c("N/A"), check.names = FALSE, stringsAsFactors = FALSE)
 
 #Remove empty rows
 rawdata <- rawdata[rowSums(is.na(rawdata) | rawdata == "") != ncol(rawdata),]

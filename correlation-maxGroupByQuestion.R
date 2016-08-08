@@ -45,7 +45,7 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
       resultMatrix[[x$col1, x$col2]] <<- PriorityQueue$new("SimpleTuple", customComparator = SimpleTupleCmp)
     }
     
-    # If it we need to find out the smallest correlation, we need to negate all correlation, so that the same algorithm can be reused
+    # If we need to find out the smallest correlation, we need to negate all correlation, so that the same algorithm can be reused
     if(!isPositive){
       x$correlation <- x$correlation * -1
     }
@@ -120,7 +120,7 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
     # Correlation is calculated for each combination of question
     result <- apply(combination, 2, function(x){
 
-      tmpCor <- as.numeric(cor(rawDF[x[1]], rawDF[x[2]], use = "na.or.complete", method = "pearson"))
+      tmpCor <- as.numeric(cor(rawDF[[x[1]]], rawDF[[x[2]]], use = "na.or.complete", method = "pearson"))
       
       if(!is.na(tmpCor)){
         
