@@ -50,7 +50,6 @@ checkdata <- function(df, rng, colname){
   
   #Some columns can be converted into numberic
   if(numericConvertible){
-    print(paste(colname, "is converted."))
     df[, colname] <- as.numeric(df[,colname])
   }
   rawdata<<-df

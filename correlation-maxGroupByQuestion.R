@@ -5,9 +5,15 @@ questions <- getFullRows(bfSettingDF["Var"])
 
 # Initialize a data structure for storing result
 SimpleTuple <- setRefClass("SimpleTuple",
-                           fields = list(col1 = "character", col2 = "character", group = "character", correlation = "numeric", numberOfRecord = "numeric")
+                           fields = list(col1 = "character", col2 = "character", identityVect = "matrix", correlation = "numeric", numberOfRecord = "numeric")
 )
 
+# grouping: a vector of column names, where these columns are used to identify different groups of records
+# questions: a vector of column names, where these columns are questions that may be correlated
+# resultLimit: a numeric value which limits the maximum number of related question that the function should return
+# minRecord: a numeric value, if number of records of a group is less than minRecord, that group will be ignored
+# isPositive: a boolean value, which indicates whether the function ranks the correlation from 1 to -1 (TRUE) or -1 to 1 (FALSE)
+# isReadable: a boolean value, which indicates whether the function should output the result in a semi-readable manner
 
 generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive, isReadable = FALSE){
   # Import priority queue for processing tuples
@@ -20,7 +26,8 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
   
   # A function specifies how to format the output to semi-readable manner
   toReadable <- function(x){
-    return (paste(x$group, "=", round(x$correlation, digits = 2), "; "))
+    result <- paste(paste(x$identityVect[1, ], x$identityVect[2, ], sep = "=", collapse = "&"), collapse = ",")
+    result <- paste(result, "(", round(x$correlation, digits = 2), ")", sep = "")
   }
   
   # Generate combination of questions for calculating correlation
@@ -90,7 +97,7 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
       }else{
         
         #If isReadable is TRUE, further convert it into readable context by toReadable function
-        return(do.call(paste, lapply(tmpResult, FUN = toReadable)))
+        return(paste(lapply(tmpResult, FUN = toReadable), collapse = ";"))
       }
     })
 
@@ -109,8 +116,14 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
 # rawDF: a dataframe
 # grouping: a vector containing column names for classifying different groups of records
 # minRecord: an integer, if the no. of record of the group is less than minRecord, the group will be ignored
-# identifier: a zero-length string on default, used to store the identity of different groups during recursion 
-subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier = ""){
+# identifier: a nx2 matrix, specifies the identity of the subset, row 1 contains question for the grouping while row 2 contains the corresponding answer of the group
+# If grouping contains "sex" and "year", the final identifier matrix could look like:
+# --------------
+# | Sex | Year |
+# --------------
+# |  F  |   1  |
+# --------------
+subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier){
   # Check for minRecord condition
   if(nrow(rawDF) < minRecord)return()
   
@@ -125,11 +138,18 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
       if(!is.na(tmpCor)){
         
         # Result is packed in a "SimpleTuple"
-        tmpTuple <- SimpleTuple$new(col1 = x[1], col2 = x[2], group = identifier, correlation = tmpCor, numberOfRecord = nrow(rawDF))
+        tmpTuple <- SimpleTuple$new(col1 = x[1], col2 = x[2], identityVect = identifier, correlation = tmpCor, numberOfRecord = nrow(rawDF))
         return (tmpTuple)
       }
     })
     return (result)
+  }
+  
+  # Initialize a matrix for identifying different subsets
+  if(missing(identifier)){
+    identifier <- matrix(character(), nrow = 2, ncol = length(grouping))
+    colnames(identifier) <- grouping
+    identifier[1, ] <-grouping 
   }
   
   # If the subset procedure is not done, start from the last grouping question
@@ -147,13 +167,11 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
     tmpDF <- tmpDF[tmpDF[currentGrouping] == x, ]
     
     # Specify the identity of the group
-    newIdentifier <-  paste(currentGrouping, ":", x)
-    if(nchar(identifier)>0){
-      newIdentifier <- paste(identifier, "&", newIdentifier)
-    }
+    identifier[[2, currentGrouping]] <-  x
+    
     
     # Recursively subset the records and find out the correlation
-    return(subsetNCalculate(tmpDF, grouping[-length(grouping)], combination, minRecord, newIdentifier))
+    return(subsetNCalculate(tmpDF, grouping[-length(grouping)], combination, minRecord, identifier))
   })
   
   return (unlist(result))
