@@ -4,17 +4,23 @@ grouping <- getFullRows(bfSettingDF["Grouping"])
 questions <- getFullRows(bfSettingDF["Var"])
 
 # Initialize a data structure for storing result
+# col1: First question used to calculate correlation coefficient
+# col2: Second question
+# identityMatrix: a nx2 matrix, identifies the subset, where n is the number of grouping question
+# correlation: correlation coefficient
+# numberOfRecord: no. of records of this subset
 SimpleTuple <- setRefClass("SimpleTuple",
-                           fields = list(col1 = "character", col2 = "character", identityVect = "matrix", correlation = "numeric", numberOfRecord = "numeric")
+                           fields = list(col1 = "character", col2 = "character", identityMatrix = "matrix", correlation = "numeric", numberOfRecord = "numeric")
 )
 
+
+# This function find out the highest correlation cofficient(s) for all combination of question among different groupings (subsets)
 # grouping: a vector of column names, where these columns are used to identify different groups of records
 # questions: a vector of column names, where these columns are questions that may be correlated
 # resultLimit: a numeric value which limits the maximum number of related question that the function should return
 # minRecord: a numeric value, if number of records of a group is less than minRecord, that group will be ignored
 # isPositive: a boolean value, which indicates whether the function ranks the correlation from 1 to -1 (TRUE) or -1 to 1 (FALSE)
 # isReadable: a boolean value, which indicates whether the function should output the result in a semi-readable manner
-
 generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive, isReadable = FALSE){
   # Import priority queue for processing tuples
   source("dataStructure/priorityQueue.R")
@@ -26,7 +32,7 @@ generateCor <- function(grouping, questions, resultLimit, minRecord, isPositive,
   
   # A function specifies how to format the output to semi-readable manner
   toReadable <- function(x){
-    result <- paste(paste(x$identityVect[1, ], x$identityVect[2, ], sep = "=", collapse = "&"), collapse = ",")
+    result <- paste(paste(x$identityMatrix[1, ], x$identityMatrix[2, ], sep = "=", collapse = "&"), collapse = ",")
     result <- paste(result, "(", round(x$correlation, digits = 2), ")", sep = "")
   }
   
@@ -138,7 +144,7 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
       if(!is.na(tmpCor)){
         
         # Result is packed in a "SimpleTuple"
-        tmpTuple <- SimpleTuple$new(col1 = x[1], col2 = x[2], identityVect = identifier, correlation = tmpCor, numberOfRecord = nrow(rawDF))
+        tmpTuple <- SimpleTuple$new(col1 = x[1], col2 = x[2], identityMatrix = identifier, correlation = tmpCor, numberOfRecord = nrow(rawDF))
         return (tmpTuple)
       }
     })
