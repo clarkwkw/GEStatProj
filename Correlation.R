@@ -13,13 +13,13 @@ upperpanel.cor <- function(x, y, digits = 4, method = "pearson", ...) {
   par(usr = c(0, 1, 0, 1))
   
   # correlation coefficient
-  r <- cor(x, y, method = method, use="pairwise.complete.obs")
+  r <- cor(x, y, method = method, use="na.or.complete")
   txt <- format(c(r), digits = digits)[1]
   txt <- paste("r= ", txt, sep = "")
   text(0.5, 0.6, txt)
   
   # p-value calculation
-  p <- cor.test(x, y, method = method, use="pairwise.complete.obs")$p.value
+  p <- cor.test(x, y, method = method, use="na.or.complete")$p.value
   txt2 <- format(c(p), digits = digits)[1]
   txt2 <- paste("p= ", txt2, sep = "")
   if(p<0.01) txt2 <- paste("p= ", "<0.01", sep = "")
@@ -41,6 +41,6 @@ lowerpanel.cor <- function(x, y, ...) {
 }
 
 MyGray <- rgb(t(col2rgb("black")), alpha=25, maxColorValue=255)
-pairs(rawdata[4:10], xlim= c(-4,6), ylim=c(-4,6), upper.panel = upperpanel.cor, lower.panel= lowerpanel.cor)
-
+#pairs(rawdata[4:10], xlim= c(-4,6), ylim=c(-4,6), upper.panel = upperpanel.cor, lower.panel= lowerpanel.cor)
+corrplot(cor(rawdata[4:54], use="na.or.complete"), type="upper", tl.col="black", tl.srt=45)
 
