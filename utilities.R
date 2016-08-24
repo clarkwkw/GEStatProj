@@ -121,3 +121,9 @@ getNumericMatrix <- function (df){
 getFullRows <- function(df){
   return(df[rowSums(is.na(df) | df == "")  == 0,])
 }
+
+nullTo <- function(x, value) {
+  x[sapply(x, is.null)] <- value
+  x <- do.call(rbind, lapply(x, rbind))
+  return(x)
+}

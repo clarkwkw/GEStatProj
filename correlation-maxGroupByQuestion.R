@@ -139,7 +139,7 @@ subsetNCalculate <- function(rawDF, grouping, combination, minRecord, identifier
     # Correlation is calculated for each combination of question
     result <- apply(combination, 2, function(x){
 
-      tmpCor <- as.numeric(cor(rawDF[[x[1]]], rawDF[[x[2]]], use = "na.or.complete", method = "pearson"))
+      tmpCor <- as.numeric(cor(x = rawDF[[x[1]]], y = rawDF[[x[2]]], use = "na.or.complete", method = "pearson"))
       
       if(!is.na(tmpCor)){
         

@@ -39,7 +39,7 @@ if(nrow(tmpDF)){
   tmpDF[["Reason"]] = "Missing DSE Eng Grade"
   invalidDF <- mergeInvalidDF(invalidDF, tmpDF)
 }
-remove(tmpDF)
+remove(tmpDF) 
 
 # ---Summarize---
 print(paste("No. of invalid records: ", length(unique(invalidDF$"Tag Number")), "/", nrow(rawdata), sep = ""))
