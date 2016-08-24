@@ -39,7 +39,7 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
   graphDF <- as.data.frame(graphDF, check.names = FALSE)
   
   # Initialize a data frame for storing return value
-  resultDF <- matrix(list(0), nrow = length(tuples), ncol = length(possibleAns)+1)
+  resultDF <- matrix(NA, nrow = length(tuples), ncol = length(possibleAns)+1)
   colnames(resultDF) <- c("group", possibleAns)
   resultDF <- as.data.frame(resultDF, check.names = FALSE)
   
