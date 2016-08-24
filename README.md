@@ -10,6 +10,10 @@
 , substitute "xxxxx.csv" by your own csv file name
 5. Run the script.
 
+## percentageTable.R
+* Please install package `ggplot2` before calling the function.
+
+For details, please refer to the [wiki page] (https://github.com/clarkwkw/GEStatProj/wiki/percentageTable.R).
 
 ## correlation-maxGroupByQuestion.R
 Please refer to the [wiki page] (https://github.com/clarkwkw/GEStatProj/wiki/correlation-maxGroupByQuestion.R).
