@@ -23,6 +23,12 @@ PercentageTuple <- setRefClass("PercentageTuple",
 # toGraph: a boolean value, if it is TRUE, a graph will also be generated
 generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
   
+  # orderedOptions: a vector of character extracted from formatDF, which contains the options of questions in a particular order
+  orderedOptions <- orderedOptions <- formatDF[[question]]
+  if(!is.null(orderedOptions)){
+    orderedOptions <- orderedOptions[orderedOptions != ""]
+  }
+  
   # A function which converts PercentageTuple's "indentity" matrix into a readable format
   toReadable <- function(x){
     result <- paste(paste(x$identityMatrix[1, ], x$identityMatrix[2, ], sep = "=", collapse = "&"), collapse = ",")
@@ -34,8 +40,8 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
   tuples <- subsetNCalculate(rawDF, question, groupings)
 
   # Initialize a data frame for storing data for the graph
-  graphDF <- matrix(NA, nrow = length(tuples)*length(possibleAns), ncol = 3)
-  colnames(graphDF) <- c("options", "groups", "percentage")
+  graphDF <- matrix(NA, nrow = length(tuples)*length(possibleAns), ncol = 4)
+  colnames(graphDF) <- c("options", "groups", "percentage", "order")
   graphDF <- as.data.frame(graphDF, check.names = FALSE)
   
   # Initialize a data frame for storing return value
@@ -57,10 +63,15 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
     
     # Loop for each row inside tuple$resultDF  
     by(x$resultDF, 1:nrow(x$resultDF), FUN = function(y){
+      optionName <- levels(droplevels(y[["Var1"]]))
+      
       # Put the details into graphDF
       graphDF[counter, "groups"] <<- groupName
-      graphDF[counter, "options"] <<- levels(droplevels(y[["Var1"]]))
+      graphDF[counter, "options"] <<- optionName
       graphDF[counter, "percentage"] <<- round(y[["Freq"]]/total*100, digits = 2)
+      if(!is.null(orderedOptions)){
+        graphDF[counter, "order"] <<- which(orderedOptions == optionName)
+      }
       
       # Put them in resultDF also
       resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- round(y[["Freq"]]/total*100, digits = 2)
@@ -81,14 +92,22 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
     
     # Import library
     library(ggplot2)
-    
+    library(scales)
     # Set x, y axis, values and the style of the graph
-    graph <- ggplot(graphDF, aes(x = groups, y = percentage,fill = options, label), environment = environment()) + 
-      geom_bar(position = "fill",stat = "identity", aes(y = percentage, ymax = percentage)) + 
+    graph <- NA
+    if(is.null(orderedOptions)){
+      graph <- ggplot(graphDF, aes(x = groups, y = percentage,fill = options, label), environment = environment())
+    }else{
+      graph <- ggplot(graphDF[order(graphDF$order, decreasing = TRUE), ], aes(x = groups, y = percentage,fill = factor(options, levels = orderedOptions), label), environment = environment()) 
+        
+    }
+    graph <- graph +
+      geom_bar(position = "fill",stat = "identity", aes(y = percentage, ymax = percentage)) +
       geom_text(aes(label = ifelse(percentage < .05, NA, percentage), ymax = percentage), position = position_fill()) +
       scale_y_continuous(labels = percent_format()) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(paste(question, "By Group", sep = ""))
+      ggtitle(paste(question, "By Group", sep = " "))
+    
     print(graph)
   }
   return(resultDF)
