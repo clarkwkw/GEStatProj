@@ -21,7 +21,8 @@ PercentageTuple <- setRefClass("PercentageTuple",
 # question: a character variable, which contains the name of that question
 # groupings: a vector of character, which contains the name of questions that used to seperate records into different groups
 # toGraph: a boolean value, if it is TRUE, a graph will also be generated
-generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
+# toPercentage: a boolean value, if it is TRUE, percentage will be displayed, otherwise, record count will be displayed
+generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE, toPercentage = TRUE){
   
   # orderedOptions: a vector of character extracted from formatDF, which contains the options of questions in a particular order
   orderedOptions <- orderedOptions <- formatDF[[question]]
@@ -68,13 +69,22 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
       # Put the details into graphDF
       graphDF[counter, "groups"] <<- groupName
       graphDF[counter, "options"] <<- optionName
-      graphDF[counter, "percentage"] <<- round(y[["Freq"]]/total*100, digits = 2)
+      if(toPercentage){
+        graphDF[counter, "percentage"] <<- round(y[["Freq"]]/total*100, digits = 2)
+        
+        # Put them in resultDF also
+        resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- round(y[["Freq"]]/total*100, digits = 2)
+      }else{
+        graphDF[counter, "percentage"] <<- y[["Freq"]]
+        
+        resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- y[["Freq"]]
+      }
+      
       if(!is.null(orderedOptions)){
         graphDF[counter, "order"] <<- which(orderedOptions == optionName)
       }
       
-      # Put them in resultDF also
-      resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- round(y[["Freq"]]/total*100, digits = 2)
+      
       
       counter <<- counter + 1
     })
@@ -106,7 +116,9 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE){
       geom_text(aes(label = ifelse(percentage < .05, NA, percentage), ymax = percentage), position = position_fill()) +
       scale_y_continuous(labels = percent_format()) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(paste(question, "By Group", sep = " "))
+      ggtitle(paste(question, "By Group", sep = " ")) +
+      labs(x = "Groupings", y = "Percentage") +
+      guides(fill=guide_legend(title="Options"))
     
     print(graph)
   }
