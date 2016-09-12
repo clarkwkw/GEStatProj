@@ -41,8 +41,8 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE, toP
   tuples <- subsetNCalculate(rawDF, question, groupings)
 
   # Initialize a data frame for storing data for the graph
-  graphDF <- matrix(NA, nrow = length(tuples)*length(possibleAns), ncol = 4)
-  colnames(graphDF) <- c("options", "groups", "percentage", "order")
+  graphDF <- matrix(NA, nrow = length(tuples)*length(possibleAns), ncol = 5)
+  colnames(graphDF) <- c("options", "groups", "percentage", "count", "order")
   graphDF <- as.data.frame(graphDF, check.names = FALSE)
   
   # Initialize a data frame for storing return value
@@ -69,14 +69,12 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE, toP
       # Put the details into graphDF
       graphDF[counter, "groups"] <<- groupName
       graphDF[counter, "options"] <<- optionName
+      graphDF[counter, "percentage"] <<- round(y[["Freq"]]/total*100, digits = 2)
+      graphDF[counter, "count"] <<- y[["Freq"]]
       if(toPercentage){
-        graphDF[counter, "percentage"] <<- round(y[["Freq"]]/total*100, digits = 2)
-        
         # Put them in resultDF also
         resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- round(y[["Freq"]]/total*100, digits = 2)
       }else{
-        graphDF[counter, "percentage"] <<- y[["Freq"]]
-        
         resultDF[counterForGroup, levels(droplevels(y[["Var1"]]))] <<- y[["Freq"]]
       }
       
@@ -103,17 +101,22 @@ generatePercentages <- function(rawDF, question, groupings, toGraph = FALSE, toP
     # Import library
     library(ggplot2)
     library(scales)
+    library(dplyr)
     # Set x, y axis, values and the style of the graph
     graph <- NA
     if(is.null(orderedOptions)){
+      graphDF <- graphDF %>% group_by(groups) %>% mutate(pos = (cumsum(percentage)-0.5*percentage)/100)
       graph <- ggplot(graphDF, aes(x = groups, y = percentage,fill = options, label), environment = environment())
     }else{
-      graph <- ggplot(graphDF[order(graphDF$order, decreasing = TRUE), ], aes(x = groups, y = percentage,fill = factor(options, levels = orderedOptions), label), environment = environment()) 
+      graphDF <- graphDF[order(graphDF$order, decreasing = TRUE), ] %>% group_by(groups) %>% mutate(pos = (cumsum(percentage)-0.5*percentage)/100)
+      graph <- ggplot(graphDF, aes(x = groups, y = percentage,fill = factor(options, levels = orderedOptions), label), environment = environment()) 
         
     }
+    sumDF <- graphDF %>% group_by(groups) %>% summarize(total = sum(count))
     graph <- graph +
       geom_bar(position = "fill",stat = "identity", aes(y = percentage, ymax = percentage)) +
-      geom_text(aes(label = ifelse(percentage < .05, NA, percentage), ymax = percentage), position = position_fill()) +
+      geom_text(aes(label = ifelse(percentage < 3, NA, paste(percentage, "%", sep = "")), y = pos, fill = NULL)) +
+      geom_text(data = sumDF, aes(label = total, y = 1.03, x = groups, fill = NULL)) +
       scale_y_continuous(labels = percent_format()) +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
       ggtitle(paste(question, "By Group", sep = " ")) +
