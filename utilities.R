@@ -1,6 +1,6 @@
-#This func. is to merge two dataframes containing two columns: "Tag Number" & "Reason"
+#This func. is to merge two dataframes containing two columns: "Tag Number" & "Column Name"
 mergeInvalidDF <- function(a, b){
-  merge(a, b, by = c("Tag Number", "Reason"), all=TRUE)
+  merge(a, b, by = c("Tag Number", "Column Name"), all=TRUE)
 }
 
 #check data in a specified column (colname) of dataframe (df)
@@ -8,11 +8,11 @@ mergeInvalidDF <- function(a, b){
 #return a data frame of invalid records with tag number and column name
 checkdata <- function(df, rng, colname){
   #record N/A value of rng seperately
-  isNAValue = any(rng == "N/A", na.rm = TRUE)
+  #isNAValue = any(rng == "NA", na.rm = TRUE) KMK note: redundant line
   
-  #remove blank/"N/A"/NA values of rng
-  rng <- rng[rng != "" & rng != "N/A" & !is.na(rng)]
-  
+  #remove all invalid values of rng
+  rng <- rng[rng!="" & !is.na(rng)]
+
   #try to vectorize rng, if it is factor, use method 1. Otherwise, method 2
   if(length(levels(rng)))
     rng <- levels(droplevels(rng)) # method 1
@@ -27,8 +27,8 @@ checkdata <- function(df, rng, colname){
   } 
   
   #add the NA value back to the rng vector if necessary
-  if (isNAValue) 
-    rng <- c(rng, NA)
+  #if (isNAValue) KMK note: do not want to count those recognized NA values in the invalid list
+  rng <- c(rng, NA)
   
   #extract related columns from df
   tmpdf <- df[which(names(df) %in% c(colname, "Tag Number"))] 
@@ -37,21 +37,23 @@ checkdata <- function(df, rng, colname){
   #Tag Numbers of invalid records are extracted
   tmpdf <- tmpdf[(tmpdf[[colname]] %in% rng) == FALSE, "Tag Number", drop = FALSE]
   
-  #If no. of invalid records > 0, set their reasons to colname (specifying why they are invalid)
+  #If no. of invalid records > 0, set their column names
   if(nrow(tmpdf)) 
-    tmpdf[["Reason"]] = colname
+    tmpdf[["Column Name"]] = colname
   
-  #Set invalid cells in rawdata to NA
+  #Set invalid cells in rawdata to NA 
+  #KMK note: this line is buggy
   df[(df[[colname]] %in% rng) == FALSE,colname] <- NA
   
   #Some columns are saved as factor, remove unused levels if applicable
   if(length(levels(df[[colname]])))
     df[[colname]] <- droplevels(df[[colname]])
   
-  #Some columns can be converted into numberic
-  if(numericConvertible){
-    df[, colname] <- as.numeric(df[,colname])
-  }
+  #Some columns can be converted into numeric
+  #KMK note: this line is buggy
+  #if(numericConvertible){
+  #  df[,colname] <- as.numeric(df[,colname])
+  #}
   rawdata<<-df
   return (tmpdf)
 }

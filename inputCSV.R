@@ -1,14 +1,10 @@
 source("utilities.R")
 
 #Import csv file, auto-convert N/A as NA, preserve original column names
-rawdata <- read.csv("combineddata.csv", header = TRUE, sep = ",", na.strings = c("N/A"), check.names = FALSE, stringsAsFactors = FALSE)
+rawdata <- read.csv("combineddata.csv", header = TRUE, sep = ",", na.strings=c("NA", "BLANK", "MULT", "ERROR #3100", "#VALUE!", "Not Asked"), check.names = FALSE, stringsAsFactors = FALSE)
 
 #Remove empty rows
 rawdata <- rawdata[rowSums(is.na(rawdata) | rawdata == "") != ncol(rawdata),]
-
-#Remove redundant columns (tag1 to 4)
-for(i in c(1:4))
-  rawdata[[paste("Tag", as.character(i), sep = "")]] <- NULL
 
 # ---Check for "out-of-range" records---
 #Import rangeOfValues.csv, which specifies possible answers for each question, to formatDF dataframe
@@ -25,26 +21,16 @@ invalidDF <- as.data.frame(do.call(rbind, invalidDF))
 #Remove unnecessary rownames
 rownames(invalidDF) <- NULL
 
-# ---Check for dependant answer (Eng Proficiency & DSE Grade)---
-#Retrieve records from rawdata, only records having non-NA values in Eng Proficiency are considered
-tmpDF <- rawdata[!is.na(rawdata[["Eng Proficiency"]]), ]
-
-#Extract Tag Numbers of invalid record
-#(If Eng Proficiency is DSE and DSE Eng Grade is NA, the record is invalid)
-tmpDF <- tmpDF[tmpDF[["Eng Proficiency"]] == "DSE" & is.na(tmpDF[["DSE Eng Grade"]]), "Tag Number", drop = FALSE]
-
-#If no. of rows > 0, some records are invalid, set their reason to "Missing DSE Eng Grade",
-#and merge them to invalidDF
-if(nrow(tmpDF)){
-  tmpDF[["Reason"]] = "Missing DSE Eng Grade"
-  invalidDF <- mergeInvalidDF(invalidDF, tmpDF)
-}
-remove(tmpDF) 
 
 # ---Summarize---
-print(paste("No. of invalid records: ", length(unique(invalidDF$"Tag Number")), "/", nrow(rawdata), sep = ""))
-print(paste("No. of invalid cells: ", nrow(invalidDF), sep = ""))
-write.csv(invalidDF, file = "invalidData.csv", row.names = FALSE)
+print(paste("No. of records: ", nrow(rawdata), sep = ""))
+if (length(invalidDF) != 0){
+  print(paste("No. of invalid cells: ", nrow(invalidDF), sep = ""))
+  write.csv(invalidDF, file = "invalidData.csv", row.names = FALSE)
+} else{
+  rm(invalidDF)
+  print(paste("There is no invalid cell", sep = ""))
+}
 
 #Convert columns to numeric, unless it contains character value
 rawdata <- lapply(rawdata, function(x) chartoNumeric(x))
