@@ -43,14 +43,14 @@ checkdata <- function(df, rng, colname){
   
   #Set invalid cells in rawdata to NA 
   #KMK note: this line is buggy
-  df[(df[[colname]] %in% rng) == FALSE,colname] <- NA
+  #df[(df[[colname]] %in% rng) == FALSE,colname] <- NA
   
   #Some columns are saved as factor, remove unused levels if applicable
   if(length(levels(df[[colname]])))
     df[[colname]] <- droplevels(df[[colname]])
   
   #Some columns can be converted into numeric
-  #KMK note: this line is buggy
+  #KMK note: this line is buggy. It curiously generates extra columns in the rawdata
   #if(numericConvertible){
   #  df[,colname] <- as.numeric(df[,colname])
   #}
