@@ -84,6 +84,9 @@ level1_summarize <- function(question, toPDF = FALSE){
   
   print(distributionGraph)
   if(toPDF){
+    if(createDir("output") == FALSE){
+      stop("Failed to locate and create 'output' directory")
+    }
     fileName <- paste("./output/lv1Summary-", question, "-distribution.pdf", sep = "")
     ggsave(fileName, distributionGraph)
   }

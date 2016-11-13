@@ -123,3 +123,8 @@ getNumericMatrix <- function (df){
 getFullRows <- function(df){
   return(df[rowSums(is.na(df) | df == "")  == 0,])
 }
+
+createDir <- function(dir){
+  return(ifelse(!dir.exists(file.path(getwd(), dir)), dir.create(file.path(getwd(), dir)), TRUE))
+  
+}
