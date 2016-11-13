@@ -13,6 +13,7 @@
 # Level 1
 ## summarize.R
 * Please install packages `ggplot2`, `plyr`, `reshape2`, `scales`, `grid` before calling the funtion.
+
 (You can install it by typing install.packages("%Package Name%") in the console of RStudio.
 
 # Level 0
