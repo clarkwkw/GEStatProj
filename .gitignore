@@ -6,6 +6,9 @@
 .DS_Store
 *.pdf
 *.png
+*.pyc
 1415T2 Data (0924 version_ for student trial).csv
 invalidData.csv
 combineddata.csv
+/nn_grade_prediction/*.csv
+/nn_grade_prediction/*.txt
