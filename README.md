@@ -10,6 +10,9 @@
 , substitute "xxxxx.csv" by your own csv file name
 5. Run the script.
 
+# Neural Network for Grade Prediction
+Please refer to the [wiki page] (https://github.com/clarkwkw/GEStatProj/wiki/Neural-Network-for-Grade-Prediction)
+
 # Level 1
 ## summarize.R
 * Please install packages `ggplot2`, `plyr`, `reshape2`, `scales`, `grid` before calling the funtion.
