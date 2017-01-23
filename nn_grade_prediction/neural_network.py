@@ -35,6 +35,9 @@ _cross_validation = 10
 def cal_accuracy(y, y_):
 		return np.mean(np.argmax(y, 1) == np.argmax(y_, 1))
 
+def cal_mse(y, y_):
+		return np.mean(np.square(y - y_))
+
 # Given a matrices of probability distribution (y), find out the underlying grades
 def vect_to_grade(vect):
 	grades = ["A", "B", "C", "D", "F"]
@@ -63,20 +66,7 @@ class Dataset:
 		for row in csv.DictReader(file):
 			for i in range(len(x_titles)):
 				tmp_X[i].append(row[x_titles[i]])
-
-			# Convert alphabetic grades into probability distribution
-			new_y = np.zeros(5)
-			if row[y_title] == "A":
-				new_y[0] = 1
-			elif row[y_title] == "B":
-				new_y[1] = 1
-			elif row[y_title] == "C":
-				new_y[2] = 1
-			elif row[y_title] == "D":
-				new_y[3] = 1
-			else:
-				new_y[4] = 1
-			tmp_Y.append(new_y)
+			tmp_Y.append([row[y_title]])
 
 		file.close()
 
@@ -165,19 +155,20 @@ class Neural_Network:
 		# The structure of Y is [ , no. of categories for dependent variables]
 		#  (Note that the first dimension is not fixed since the no. of records can vary)
 		X = tf.placeholder(tf.float32, [None, len(self.dataset.x_titles)])
-		Y = tf.placeholder(tf.float32, [None, 5])
+		Y = tf.placeholder(tf.float32, [None, 1])
 
 		# Let the library know that we are going to put X into designed network
 		pred = self.network(X, self.weights, self.biases)
 
-		# The equation to evaluate the prediction of the network
-		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, Y))
+#		# The equation to evaluate the prediction of the network
+#		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, Y))
+		mse = tf.reduce_mean(tf.square(pred - Y))
 
 		# The library should improve the network according to cross_entropy
-		optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(cross_entropy)
+		optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(mse)
 
 		# The network may give a matrix whose row sum not equal to 1, a softmax regression converts it to a proper probability distribution
-		train_prediction = tf.nn.softmax(Y)
+#		train_prediction = tf.nn.softmax(Y)
 
 
 
@@ -189,8 +180,8 @@ class Neural_Network:
 
 		signal.signal(signal.SIGINT, signal_handler)
 
-		max_accuracy = 0
-		global_accuracy = []
+		min_mse = float("inf")
+		global_mse = []
 
 		# Starting training with cross validation
 		for fold_no in range(_cross_validation):
@@ -208,30 +199,30 @@ class Neural_Network:
 				for epoch in range(self.training_epocs):
 
 					# Run the defined optimizer with training data & testing data
-					_, c = sess.run([optimizer, cross_entropy], feed_dict = {X: self.dataset.X[train_set], Y: self.dataset.Y[train_set]})
+					_, c = sess.run([optimizer, mse], feed_dict = {X: self.dataset.X[train_set], Y: self.dataset.Y[train_set]})
 					
 					# It is time to display progress
 					if epoch % self.display_step == 0:
-						#print "Epoch:", "%06d" % (epoch+1), "Entropy =", "%.4f" % (c)
+						#print "Epoch:", "%06d" % (epoch+1), "MSE =", "%.4f" % (c)
 						
 						# Calculate the accuracy on testing data
-						test_c, test_pred = sess.run([cross_entropy, pred], feed_dict = {X: self.dataset.X[test_set], Y: self.dataset.Y[test_set]})
-						test_accuracy = cal_accuracy(test_pred, self.dataset.Y[test_set])
-						#print "=====> Test Entropy =", "%.4f" % test_c, "Test Accuracy =", "%.4f" % test_accuracy
+						test_pred = sess.run([pred], feed_dict = {X: self.dataset.X[test_set]})
+						test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
+						#print "=====> Test MSE =", "%.4f" % test_mse
 						
 						# Let the decider know the current testing accuracy
-						if decider.update(test_c) == False:
+						if decider.update(test_mse) == False:
 							break
 
 				# Training for one fold is over, calculate the final tetsing accuracy
 				test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
-				test_accuracy = cal_accuracy(test_pred, self.dataset.Y[test_set])
-				print test_accuracy
+				test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
+				print test_mse
 
 				# Save the accuracy. If this is the highest so far, also save the network configuration
-				global_accuracy.append(test_accuracy)
-				if test_accuracy > max_accuracy:
-					max_accuracy = test_accuracy
+				global_mse.append(test_mse)
+				if test_mse < min_mse:
+					min_mse = test_mse
 					saver = tf.train.Saver()
 					saver.save(sess, "Tmp.ckpt", global_step = 1)
 			if _forced_quit:
@@ -243,10 +234,10 @@ class Neural_Network:
 
 
 		# All folds are over, output the training statistics
-		global_accuracy = np.asarray(global_accuracy)
-		print "Max accuracy:", "%.4f" % max_accuracy, "Averge accuracy:", "%.4f" % np.mean(global_accuracy), "Variance:", "%.4f" % np.var(global_accuracy)
-		print "Accuracy Vector:"
-		print global_accuracy
+		global_mse = np.asarray(global_mse)
+		print "Min MSE:", "%.4f" % min_mse, "Averge MSE:", "%.4f" % np.mean(global_mse), "Variance:", "%.4f" % np.var(global_mse)
+		print "MSE Vector:"
+		print global_mse
 		signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 	# This is for prediction
@@ -276,7 +267,6 @@ class Neural_Network:
 
 			# Feed the x values and get prediction
 			result = pred.eval(feed_dict = {X: self.dataset.X}, session = sess)
-			result = vect_to_grade(result)
 		signal.signal(signal.SIGINT, signal.SIG_DFL)
 		return result
 
@@ -288,7 +278,7 @@ class Train_decider:
 		self.cont = True
 		self.count = 0
 	
-	# Given a cost, compare it with the previous one, if it keeps decreasing for certain no. of epochs, return False.
+	# Given a cost, compare it with the previous one, if it keeps increasing for certain no. of epochs, return False.
 	# Otherwise, return True
 	def update(self, cost):
 		if _forced_quit:
@@ -299,10 +289,12 @@ class Train_decider:
 			self.cont = True
 			self.count = 0
 		else:
-			self.count += (cost - self.prev_cost) > 0
+			if cost > self.prev_cost:
+				self.count = self.count + 1
+			else:
+				self.count = 0
 			self.prev_cost = cost
 			self.cont = self.count <= Train_decider.tolerance
-
 		return self.cont
 
 	def cont(self):

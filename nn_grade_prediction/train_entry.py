@@ -7,8 +7,8 @@ display_step = 100
 # No. of hidden units in the second layer
 n_hidden_1 = 20
 
-x_titles = ["Q1 (Before)", "Q2 (Before)", "Q3 (Before)", "Q4 (Before)", "Q5 (Before)", "Q6 (Before)", "Q7 (Before)", "Q8 (Before)", "Q9 (Before)", "Q10 (Before)", "Q11 (Before)", "Q12 (Before)", "Q13 (Before)", "Q14 (Before)", "Q15 (Before)", "Q16 (Before)", "Q17 (Before)", "Sex", "Phy", "Chem", "Bio", "Com Sci", "Inter Sci", "Eng Lit", "Chin Lit", "History", "Chin History", "Ethics & RS", "Music", "Visual Art", "Econ", "Geog", "Lang_Cant", "Lang_Put", "Lang_Other", "DSE?", "DSE Eng Grade", "Year of Study", "Faculty_ART", "Faculty_BAF", "Faculty_BASCI", "Faculty_BASSF", "Faculty_CCST", "Faculty_EDU", "Faculty_ENF", "Faculty_ENSCF", "Faculty_MED", "Faculty_SCF", "Faculty_SLAW", "Faculty_SSF", "cGPA (Before)", "First GEF?"]
-y_title = "Grade Catagorised"
+x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng_Lit", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Medium_Eng", "Medium_Put", "First GEF"]
+y_title = "Grade_dec"
 
 
 # Define the network structure
@@ -21,18 +21,18 @@ def network(x, weights, biases):
 # Define the weight variables
 weights = {
     'h1': tf.Variable(tf.random_normal([len(x_titles), n_hidden_1])),
-    'out': tf.Variable(tf.random_normal([n_hidden_1, 5]))
+    'out': tf.Variable(tf.random_normal([n_hidden_1, 1]))
 }
 
 # Define the bias variables
 biases = {
     'b1': tf.Variable(tf.random_normal([n_hidden_1])),
-    'out': tf.Variable(tf.random_normal([5]))
+    'out': tf.Variable(tf.random_normal([1]))
 }
 
 # Import csv file
 dataset = Dataset()
-dataset.init_by_traindata("processed.csv", x_titles, y_title)
+dataset.init_by_traindata("processed_filtered.csv", x_titles, y_title)
 
 # Initialize a neural network with the dataset
 nn = Neural_Network(dataset)
