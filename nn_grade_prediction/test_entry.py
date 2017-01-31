@@ -5,7 +5,7 @@ training_epocs = 100000
 display_step = 100
 n_hidden_1 = 20
 
-x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng_Lit", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Medium_Eng", "Medium_Put", "First GEF"]
+x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng prof", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Faculty_Eng", "Faculty_Put", "First GEF"]
 y_title = "Grade_dec"
 
 def network(x, weights, biases):
@@ -25,10 +25,10 @@ biases = {
 }
 
 dataset = Dataset()
-dataset.init_by_testdata("processed_filtered.csv", x_titles)
+dataset.init_by_testdata("preprocessed.csv", x_titles)
 nn = Neural_Network(dataset)
 nn.configure_parameters(learning_rate, training_epocs, display_step)
 nn.configure_network(weights, biases, network)
-result = nn.test("entry1801/")
+result = nn.test("entry1861/")
 for x in result:
 	print x[0]
