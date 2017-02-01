@@ -29,6 +29,6 @@ dataset.init_by_testdata("preprocessed.csv", x_titles)
 nn = Neural_Network(dataset)
 nn.configure_parameters(learning_rate, training_epocs, display_step)
 nn.configure_network(weights, biases, network)
-result = nn.test("entry1861/")
+result = nn.test("entry1833/")
 for x in result:
 	print x[0]
