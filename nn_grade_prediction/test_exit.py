@@ -29,6 +29,8 @@ dataset.init_by_testdata("preprocessed_witheffort.csv", x_titles)
 nn = Neural_Network(dataset)
 nn.configure_parameters(learning_rate, training_epocs, display_step)
 nn.configure_network(weights, biases, network)
-result = nn.test("entry1486/")
+
+# Specify the path to checkpoint file (saved model) here
+result = nn.test("exit1448/")
 for x in result:
 	print x[0]

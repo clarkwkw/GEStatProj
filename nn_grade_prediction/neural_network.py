@@ -22,19 +22,9 @@ _multi_thread = 10
 # No. of cross validation needs to be performed
 _cross_validation = 10
 
-# Given two matrices of probability distribution (y), calculate the ratio of matching values
-def cal_accuracy(y, y_):
-		return np.mean(np.argmax(y, 1) == np.argmax(y_, 1))
-
+# Calculate mean square error between predicted values and true values
 def cal_mse(y, y_):
-		result = np.mean(np.square(y - y_))
-		return result
-
-# Given a matrices of probability distribution (y), find out the underlying grades
-def vect_to_grade(vect):
-	grades = ["A", "B", "C", "D", "F"]
-	tmp = np.argmax(vect, 1)
-	return [grades[x] for x in tmp]
+		return np.mean(np.square(y - y_))
 
 class Dataset:
 
@@ -111,11 +101,11 @@ class Dataset:
 	def next_fold(self):
 
 		# Calulate the indices of the next fold of testing data
-		self.test_fold = (self.test_fold[1]%self.m, (self.test_fold[1]*2-self.test_fold[0])%self.m)
+		self.test_fold = (self.test_fold[1], self.test_fold[1]*2-self.test_fold[0])
 
 		# Find out the remaining data, they are the training data
 		train_fold = [x for x in range(0, self.m) if x not in self.sample_sequence[self.test_fold[0]:self.test_fold[1]]]
-		
+
 		# Put both of them into a tuple
 		return (self.sample_sequence[self.test_fold[0]:self.test_fold[1]], train_fold)
 
@@ -152,17 +142,11 @@ class Neural_Network:
 		# Let the library know that we are going to put X into designed network
 		pred = self.network(X, self.weights, self.biases)
 
-#		# The equation to evaluate the prediction of the network
-#		cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, Y))
+		# The equation to evaluate the prediction of the network
 		mse = tf.reduce_mean(tf.square(pred - Y))
 
-		# The library should improve the network according to cross_entropy
+		# The library should improve the network according to mean square error
 		optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(mse)
-
-		# The network may give a matrix whose row sum not equal to 1, a softmax regression converts it to a proper probability distribution
-#		train_prediction = tf.nn.softmax(Y)
-
-
 
 		# Set up an initializer for the above variables/ placeholders
 		init = tf.initialize_all_variables()
@@ -180,6 +164,7 @@ class Neural_Network:
 
 			print "Fold", (fold_no+1), ":",
 			sys.stdout.flush()
+
 			# Initialize a decider object to check when to stop training
 			decider = Train_decider()
 
@@ -192,26 +177,26 @@ class Neural_Network:
 					# Run the defined optimizer with training data & testing data
 					_, c = sess.run([optimizer, mse], feed_dict = {X: self.dataset.X[train_set], Y: self.dataset.Y[train_set]})
 					
-					# It is time to display progress
+					# It is time to display progress and evluate the network
 					if epoch % self.display_step == 0:
 						#print "Epoch:", "%06d" % (epoch+1), "MSE =", "%.4f" % (c)
 						
-						# Calculate the accuracy on testing data
+						# Calculate the mse on testing data
 						test_pred = sess.run([pred], feed_dict = {X: self.dataset.X[test_set]})
 						test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
 						#print "=====> Test MSE =", "%.4f" % test_mse
 						
-						# Let the decider know the current testing accuracy
+						# Let the decider know the current testing mse
 						if decider.update(test_mse) == False:
 							break
 
-				# Training for one fold is over, calculate the final tetsing accuracy
+				# Training for one fold is over, calculate the final testing mse
 				test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
 
 				test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
 				print test_mse
 
-				# Save the accuracy. If this is the highest so far, also save the network configuration
+				# Save the error. If this is the lowest so far, also save the network configuration
 				global_mse.append(test_mse)
 				if test_mse < min_mse:
 					min_mse = test_mse
@@ -263,6 +248,8 @@ class Neural_Network:
 
 		signal.signal(signal.SIGINT, signal.SIG_DFL)
 		return result
+
+	# Print the weights and biases	
 	def printPar(self, sess):
 		print "Weights: "
 		for (key, value) in self.weights.items():
@@ -280,7 +267,7 @@ class Train_decider:
 		self.cont = True
 		self.count = 0
 	
-	# Given a cost, compare it with the previous one, if it keeps increasing for certain no. of epochs, return False.
+	# Given a error cost, compare it with the previous one, if it keeps increasing for certain no. of epochs, return False.
 	# Otherwise, return True
 	def update(self, cost):
 		if _forced_quit:
