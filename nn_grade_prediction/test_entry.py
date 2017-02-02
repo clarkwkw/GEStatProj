@@ -3,9 +3,9 @@ from neural_network import *
 learning_rate = 0.001
 training_epocs = 100000
 display_step = 100
-n_hidden_1 = 20
+n_hidden_1 = 10
 
-x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng prof", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Faculty_Eng", "Faculty_Put", "First GEF"]
+x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng prof", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Medium_Eng", "Medium_Put", "First GEF"]
 y_title = "Grade_dec"
 
 def network(x, weights, biases):
@@ -29,6 +29,6 @@ dataset.init_by_testdata("preprocessed.csv", x_titles)
 nn = Neural_Network(dataset)
 nn.configure_parameters(learning_rate, training_epocs, display_step)
 nn.configure_network(weights, biases, network)
-result = nn.test("entry1833/")
+result = nn.test("entry1486/")
 for x in result:
 	print x[0]

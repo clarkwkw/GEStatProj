@@ -4,15 +4,6 @@ This file defines:
 2. The way to train neural network (Neural_Network class)
 3. When to stop training (Train_decider class)
 4. Other utilities functions
-
-The x values (independent variables) are stored as a matrix, in which one row corresponds to one student, and one column corresponds to one question (or an option of a question).
-The y value (dependent variable) is also stored as a matrix, in which one row corresponds to one student, and columns correspond to different categories of the y value.
-
-A row of the matrix containing y values is in this structure:
-[a, b, c, d, f], in which a, b, c, d and f are the probability of getting the grade
-
-e.g. If we knew there is a student gets an A/ A-, the corresponding row will be [1, 0, 0, 0, 0]
-
 '''
 
 import csv
@@ -36,7 +27,8 @@ def cal_accuracy(y, y_):
 		return np.mean(np.argmax(y, 1) == np.argmax(y_, 1))
 
 def cal_mse(y, y_):
-		return np.mean(np.square(y - y_))
+		result = np.mean(np.square(y - y_))
+		return result
 
 # Given a matrices of probability distribution (y), find out the underlying grades
 def vect_to_grade(vect):
@@ -188,7 +180,6 @@ class Neural_Network:
 
 			print "Fold", (fold_no+1), ":",
 			sys.stdout.flush()
-
 			# Initialize a decider object to check when to stop training
 			decider = Train_decider()
 
@@ -216,6 +207,7 @@ class Neural_Network:
 
 				# Training for one fold is over, calculate the final tetsing accuracy
 				test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
+
 				test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
 				print test_mse
 
@@ -267,8 +259,18 @@ class Neural_Network:
 
 			# Feed the x values and get prediction
 			result = pred.eval(feed_dict = {X: self.dataset.X}, session = sess)
+			self.printPar(sess)
+
 		signal.signal(signal.SIGINT, signal.SIG_DFL)
 		return result
+	def printPar(self, sess):
+		print "Weights: "
+		for (key, value) in self.weights.items():
+			print "\t"+key+": "
+			print sess.run(value)
+		print "Biases: "
+		for (key, value) in self.weights.items():
+			print "\t"+key+": "
 
 class Train_decider:
 	tolerance = 2

@@ -7,7 +7,7 @@ display_step = 100
 # No. of hidden units in the second layer
 n_hidden_1 = 10
 
-x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng prof", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Medium_Eng", "Medium_Put", "First GEF"]
+x_titles = ["Logical", "Appreciation of Science", "Understanding of Science", "Understanding of Good life", "Appreciation of Diversity", "Sex", "nSci", "nNonSci", "Eng prof", "Year of Study", "Faculty_Art", "Faculty_Sci", "Faculty_Bus", "cGPA (Before)", "Medium_Can", "Medium_Eng", "Medium_Put", "First GEF", "Q18 (Assigned Text Read)", "Q19 (Chinese Translation)", "Q20 (Text/week)", "Q21 (Time/week)", "Q22 (% Lecture)"]
 y_title = "Grade_dec"
 
 
@@ -32,7 +32,7 @@ biases = {
 
 # Import csv file
 dataset = Dataset()
-dataset.init_by_traindata("preprocessed.csv", x_titles, y_title)
+dataset.init_by_traindata("preprocessed_witheffort.csv", x_titles, y_title)
 
 # Initialize a neural network with the dataset
 nn = Neural_Network(dataset)
