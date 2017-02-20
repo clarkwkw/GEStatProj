@@ -34,12 +34,12 @@ text_read_response <- rawdata$Q18
 chi_read_response <- rawdata$Q19
 
 t <- table(text_read_response)[text_read_option]
-tx <- barplot(t, main = "Text Read (All)", ylab = "count", ylim = c(0, 45))
+tx <- barplot(t, main = "Text Read", ylab = "count", ylim = c(0, 45))
 text(x = tx, y = t, label = t, pos = 3, cex = 0.8, col = "red")
 
 # Chinese text read ----
 t <- table(chi_read_response)[text_read_option]
-tx <- barplot(t, main = "Chinese Text Read (All)", ylab = "count", ylim = c(0, 45))
+tx <- barplot(t, main = "Chinese Text Read", ylab = "count", ylim = c(0, 45))
 text(x = tx, y = t, label = t, pos = 3, cex = 0.8, col = "red")
 
 # Mean of text read ----
@@ -140,10 +140,9 @@ t.test(rj_time_response ~ keep_used)
 # (no significant result)
 t.test(text_time_response ~ keep_used)
 
-# Lecture/Tutorial attendance by KEEP usage
+# Lecture/Tutorial attendance by KEEP usage ----
 # difference in attendance for students used / didnt used KEEP
 # (no significant result)
-# (but, using t-test appropriate?)
 t.test(lec_attend_response ~ keep_used)
 t.test(tut_attend_response ~ keep_used)
 
