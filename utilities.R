@@ -1,3 +1,28 @@
+# This func is to read csv/xslx file by respective function
+# To read xlsx file, please install openxlsx library first
+readData <- function(file, ...){
+  # Split file names by dot
+  fileNames <- strsplit(file, "\\.")[[1]]
+  if(length(fileNames) < 2){
+    stop("File name without extension")
+  }
+  
+  # Check file extension
+  ext <- fileNames[length(fileNames)]
+  if(tolower(ext) == "csv"){
+    return (read.csv(file, header = TRUE, sep = ",", stringsAsFactors = FALSE, ...))
+  }else if(tolower(ext) == "xlsx"){
+    library("openxlsx")
+    df <- openxlsx::read.xlsx(file, sheet = 1, ...)
+    # In openxlsx, spaces in column names are automatically converted to dots
+    # which is not desirable, so convert it back
+    colnames(df)<-gsub("\\.", " ", colnames(df))
+    return(df)
+  }else{
+    stop("Unrecognized file extension")
+  }
+}
+
 #This func. is to merge two dataframes containing two columns: "Tag Number" & "Column Name"
 mergeInvalidDF <- function(a, b){
   merge(a, b, by = c("Tag Number", "Column Name"), all=TRUE)
