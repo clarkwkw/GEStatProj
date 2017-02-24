@@ -25,7 +25,7 @@ biases = {
 }
 
 dataset = Dataset()
-dataset.init_by_testdata("preprocessed_witheffort.csv", x_titles)
+dataset.init_by_testdata("preprocessed_witheffort_UGFN.csv", x_titles)
 nn = Neural_Network(dataset)
 nn.configure_parameters(learning_rate, training_epocs, display_step)
 nn.configure_network(weights, biases, network)

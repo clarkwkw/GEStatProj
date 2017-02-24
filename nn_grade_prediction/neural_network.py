@@ -89,7 +89,7 @@ class Dataset:
 		self.sample_sequence = random.sample(range(self.m), self.m)
 
 		# Store the tuple of starting and ending index of testing data
-		self.test_fold = (0, self.m/fold_count)
+		self.test_fold = (0, self.m//fold_count)
 
 		# Find out the remaining indices, those are for training
 		train_fold = [x for x in range(0, self.m) if x not in self.sample_sequence[self.test_fold[0]:self.test_fold[1]]]
@@ -162,7 +162,7 @@ class Neural_Network:
 		# Starting training with cross validation
 		for fold_no in range(_cross_validation):
 
-			print "Fold", (fold_no+1), ":",
+			print ("Fold", (fold_no+1), ":", end = " ")
 			sys.stdout.flush()
 
 			# Initialize a decider object to check when to stop training
@@ -194,7 +194,7 @@ class Neural_Network:
 				test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
 
 				test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
-				print test_mse
+				print (test_mse)
 
 				# Save the error. If this is the lowest so far, also save the network configuration
 				global_mse.append(test_mse)
@@ -212,10 +212,11 @@ class Neural_Network:
 
 		# All folds are over, output the training statistics
 		global_mse = np.asarray(global_mse)
-		print "Min MSE:", "%.4f" % min_mse, "Averge MSE:", "%.4f" % np.mean(global_mse), "Variance:", "%.4f" % np.var(global_mse)
-		print "MSE Vector:"
-		print global_mse
+		print ("Min MSE:", "%.4f" % min_mse, "Averge MSE:", "%.4f" % np.mean(global_mse), "Variance:", "%.4f" % np.var(global_mse))
+		print ("MSE Vector:")
+		print (global_mse)
 		signal.signal(signal.SIGINT, signal.SIG_DFL)
+		return(np.mean(global_mse))
 
 	# This is for prediction
 	# save_path: The path to a folder containing the save file
@@ -225,7 +226,13 @@ class Neural_Network:
 		X = tf.placeholder(tf.float32, [None, len(self.dataset.x_titles)])
 		pred = self.network(X, self.weights, self.biases)
 		saver = tf.train.Saver()
-		init = tf.initialize_all_variables()
+
+		tf_version = float(tf.__version__[0:3])
+		init = 0
+		if tf_version < 1:
+			init = tf.initialize_all_variables()
+		else:
+			init = tf.global_variables_initializer()
 
 		signal.signal(signal.SIGINT, signal.SIG_IGN)
 		result = []
@@ -239,7 +246,7 @@ class Neural_Network:
 			if ckpt and ckpt.model_checkpoint_path:
 				saver.restore(sess, ckpt.model_checkpoint_path)
 			else:
-				print "Check point file not found. Exit."
+				print ("Check point file not found. Exit.")
 				sys.exit(0)
 
 			# Feed the x values and get prediction
@@ -251,16 +258,16 @@ class Neural_Network:
 
 	# Print the weights and biases	
 	def printPar(self, sess):
-		print "Weights: "
+		print ("Weights: ")
 		for (key, value) in self.weights.items():
-			print "\t"+key+": "
-			print sess.run(value)
-		print "Biases: "
+			print ("\t"+key+": ")
+			print (sess.run(value))
+		print ("Biases: ")
 		for (key, value) in self.weights.items():
-			print "\t"+key+": "
+			print ("\t"+key+": ")
 
 class Train_decider:
-	tolerance = 2
+	tolerance = 4
 
 	def __init__(self):
 		self.cost_initialized = False
@@ -292,6 +299,6 @@ class Train_decider:
 		return self.cont
 
 def signal_handler(signal, frame):
-	print "Quit signal received. Please wait..."
+	print ("Quit signal received. Please wait...")
 	global _forced_quit
 	_forced_quit = True
