@@ -201,7 +201,7 @@ class Neural_Network:
 				if test_mse < min_mse:
 					min_mse = test_mse
 					saver = tf.train.Saver()
-					saver.save(sess, "Tmp.ckpt", global_step = 1)
+					saver.save(sess, "./Tmp.ckpt", global_step = 1)
 			if _forced_quit:
 				break;
 
