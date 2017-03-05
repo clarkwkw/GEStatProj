@@ -1,47 +1,134 @@
+install.packages("ggplot2")
+library(ggplot2)
+
 #Import csv file, auto-convert N/A as NA, preserve original column names
-rawdata <- read.csv("201617T1_KMKonly_data.csv", header = TRUE, sep = ",", na.strings=c("NA", "BLANK", "MULT", "ERROR #3100", "#VALUE!", "Not Asked"), check.names = FALSE, stringsAsFactors = FALSE)
-formatDF <- read.csv("rangeOfValues_1617T1.csv", header = TRUE, sep = ",", na.strings = c("--"), check.names = FALSE, stringsAsFactors = FALSE) 
+rawdata <- read.csv("201617T1 KM Gaming 0220(finalized) (student version).csv", header = TRUE, sep = ",", na.strings=c("NA", "BLANK", "MULT", "ERROR #3100", "#VALUE!", "Not Asked"), check.names = FALSE, stringsAsFactors = FALSE)
+#formatDF <- read.csv("rangeOfValues_1617T1.csv", header = TRUE, sep = ",", na.strings = c("--"), check.names = FALSE, stringsAsFactors = FALSE) 
 
-#Tag out OD and Civ 4 participants
-tag_civ=which(!is.na(rawdata$Q41))
-tag_OD=which(!is.na(rawdata$Q36))
-
-#doubt students who play civ4 would join OD, therefore excluding those already in tag_Civ
-tag_OD=tag_OD[!tag_OD%in%tag_civ]
-
-
-#Remove Subject, Sub-class, Class no.
-rawdata[1:3]<-list(NULL)
-
-#Remove empty rows
-rawdata <- rawdata[rowSums(is.na(rawdata) | rawdata == "") != ncol(rawdata),]
-
-for(i in 1:7){rawdata[rawdata[,52]==formatDF[i,52],52]=2*i-1.5}
-
-for(i in 1:6){rawdata[rawdata[,53]==formatDF[i,53],53]=2*i-1.5}
-
-rawdata[rawdata[,54]==formatDF[1,54],54]=0.5
-for(i in 2:5){rawdata[rawdata[,54]==formatDF[i,54],54]=mean(as.numeric(unlist(strsplit(formatDF[i,54]," to <"))))}
-rawdata[rawdata[,54]==formatDF[6,54],54]=15
-
-for(i in 1:6){rawdata[rawdata[,55]==formatDF[i,55],55]=i-0.5}
-
-for(i in 1:6){rawdata[rawdata[,56]==formatDF[i,56],56]=max(0.2*(i-1)-0.1,0)}
-
-for(i in 1:6){rawdata[rawdata[,57]==formatDF[i,57],57]=max(0.2*(i-1)-0.1,0)}
-
-for(i in 52:57){rawdata[,i]=as.numeric(rawdata[,i])}
-
-rawdata=cbind(rep(0,nrow(rawdata)),rawdata)
-# ---Check for "out-of-range" records---
-#Import rangeOfValues.csv, which specifies possible answers for each question, to formatDF dataframe
-
-rawdata[rawdata$Q41 %in% 1:6,1]="Civ"
-rawdata[!rawdata$Q41 %in% 1:6,1]="OD"
-for(i in 2:70)
-{
-boxplot(rawdata[,i]~rawdata[,1],main=names(rawdata)[i])
-points(1:2,aggregate(rawdata[,i],list(rawdata[,1]),mean,na.rm=TRUE, na.action=NULL)[,2],col="red")
-print(names(rawdata[i]))
-print(t.test(rawdata[,i]~rawdata[,1]))
+#Quantifying Q18-Q23, borrowed from Danny
+quantify <- function(response, choice, converted_num) {
+  sapply(as.factor(response), function(x) converted_num[which(x == choice)])
 }
+
+ttestResult=NULL
+
+#questionaire Q1-17
+for(i in 8:58)
+{
+  png(paste(names(rawdata)[i],".png",sep=""))
+  print(
+    ggplot(rawdata)+
+      aes(x=rawdata$`Civ 4?`, fill=factor(rawdata[,i])) +
+      geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,unlist(t.test(rawdata[,i]~rawdata$`Civ 4?`)))
+}
+
+#questionaire Q18-19
+text_read_option <- c("0 to 1", "2 to 3", "4 to 5", "6 to 7", "8 to 9", "10 to 11")
+text_read_num <- c(0.5, 2.5, 4.5, 6.5, 8.5, 10.5)
+for(i in 59:60)
+{ 
+  text_read_response <- rawdata[,i]
+  png(paste(names(rawdata)[i],".png",sep=""))
+  print(
+    ggplot(rawdata)+
+      aes(x=rawdata$`Civ 4?`, fill=factor(rawdata[,i])) +
+      geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,
+                    unlist(t.test(quantify(text_read_response, text_read_option, text_read_num)~rawdata$`Civ 4?`)))
+}
+
+#questionaire Q20
+rj_time_option <- c("less than 1", "1 to <3", "3 to <6", "6 to <10", "10 to <15", "more than 15")
+rj_time_num <- c(0.5, 2, 4.5, 8, 12.5, 16)
+rj_time_response <- rawdata$`Q20 (Time/RJ)`
+png("Q20.png")
+print(
+  ggplot(rawdata)+
+  aes(x=rawdata$`Civ 4?`, fill=factor(rawdata$`Q20 (Time/RJ)`)) +
+  geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,
+                    unlist(t.test(quantify(rj_time_response, rj_time_option, rj_time_num)~rawdata$`Civ 4?`)))
+ 
+#questionaire Q21
+read_time_option <- c("less than 1", "1 to <2", "2 to <3", "3 to <4", "4 to <5", "more than 5")
+read_time_num <- c(0.5, 1.5, 2.5, 3.5, 4.5, 6)
+read_time_response <- rawdata$`Q21 (Time/reading)`
+png("Q21.png")
+print(
+  ggplot(rawdata)+
+  aes(x=rawdata$`Civ 4?`, fill=factor(rawdata$`Q21 (Time/reading)`)) +
+  geom_bar(position = "fill"))
+dev.off()
+ttestResult=rbind(ttestResult,
+                  unlist(t.test(quantify(read_time_response, read_time_option, read_time_num)~rawdata$`Civ 4?`)))
+  
+#questionaire Q22-23
+attend_option <- c("0", "1-20%", "21-40%", "41-60%", "61-80%", "81-100%")
+attend_num <- c(0, .10, .30, .50, .70, .90)
+for(i in 63:64)
+{ 
+  attend_response <- rawdata[,i]
+  png(paste('Q',i-41,".png",sep=""))
+  print(
+    ggplot(rawdata)+
+      aes(x=rawdata$`Civ 4?`, fill=factor(rawdata[,i])) +
+      geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,
+                    unlist(t.test(quantify(attend_response, attend_option, attend_num)~rawdata$`Civ 4?`)))
+}  
+
+#questionaire Q24-35
+for(i in 65:76)
+{
+  png(paste(names(rawdata)[i],".png",sep=""))
+  print(
+    ggplot(rawdata)+
+      aes(x=rawdata$`Civ 4?`, fill=factor(rawdata[,i])) +
+      geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,unlist(t.test(rawdata[,i]~rawdata$`Civ 4?`)))
+}
+
+#questionaire part 4 "Learning Activities(LA)" (Q36-45)
+#match Q36 and Q41, Q37 and Q42, etc.
+dataOD=subset(rawdata,rawdata$`Civ 4?`==0)
+dataOD=cbind(dataOD$`Civ 4?`,dataOD[,137:141])
+names(dataOD)=c("Civ 4?","LA1","LA2","LA3","LA4","LA5")
+dataCiv=b=subset(rawdata,rawdata$`Civ 4?`==1)
+dataCiv=cbind(dataCiv$`Civ 4?`,dataCiv[,142:146])
+names(dataCiv)=c("Civ 4?","LA1","LA2","LA3","LA4","LA5")
+dataComb=rbind(dataCiv,dataOD)
+#graph and t test
+for(i in 2:6)
+{
+  png(paste(names(dataComb)[i],".png",sep=""))
+  print(
+    ggplot(dataComb)+
+      aes(x=dataComb$`Civ 4?`, fill=factor(dataComb[,i])) +
+      geom_bar(position = "fill"))
+  dev.off()
+  ttestResult=rbind(ttestResult,unlist(t.test(dataComb[,i]~dataComb$`Civ 4?`)))
+}
+
+#Sex
+sex_option <- c("F", "M")
+sex_num <- c(0,1)
+sex_response <- rawdata$Sex
+png("Sex.png")
+print(
+  ggplot(rawdata)+
+    aes(x=rawdata$`Civ 4?`, fill=factor(rawdata$Sex)) +
+    geom_bar(position = "fill"))
+dev.off()
+ttestResult=rbind(ttestResult,
+                  unlist(t.test(quantify(sex_response, sex_option, sex_num)~rawdata$`Civ 4?`)))
+
+
+
+#ttestResult naming
+row.names(ttestResult) <- c(names(rawdata[,8:77]),names(dataComb[,2:6]))
