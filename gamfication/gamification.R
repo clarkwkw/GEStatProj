@@ -128,7 +128,6 @@ dev.off()
 ttestResult=rbind(ttestResult,
                   unlist(t.test(quantify(sex_response, sex_option, sex_num)~rawdata$`Civ 4?`)))
 
-
-
-#ttestResult naming
+#ttestResult naming and exporting
 row.names(ttestResult) <- c(names(rawdata[,8:77]),names(dataComb[,2:6]))
+write.csv(ttestResult,file ="ttestResult.csv" )
