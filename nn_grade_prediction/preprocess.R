@@ -1,4 +1,3 @@
-
 preprocess <- function(){
   # --- Definition of conversion functions --- #
   
@@ -103,7 +102,17 @@ preprocess <- function(){
     resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "DSE?"]) & !is.na(rawdata[, "Language"]) & rawdata[, "DSE?"] != "Yes" & rawdata[, "Language"] == "Putonghua", targetCol] <- 0
     return(resultDF)
   }
-  
+  eng_prof_new <- function(resultDF, rawdata, targetCol){
+    resultDF[, targetCol] <- NA
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "Language"]) & rawdata[, "Language"] == "English", targetCol] <- 2
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "DSE 5 or above", targetCol] <- 1
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "National Exam >=140", targetCol] <- 1
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "Taiwan Exam >=15", targetCol] <- 1
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "DSE 4 or below", targetCol] <- 0
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "National Exam <=139", targetCol] <- 0
+    resultDF[is.na(resultDF[, targetCol]) & !is.na(rawdata[, "English Proficiency"]) & rawdata[, "English Proficiency"] == "Taiwan Exam <=14", targetCol] <- 0
+    return(resultDF)
+  }
   # --- End of conversion functions definition --- #
   
   
@@ -114,12 +123,12 @@ preprocess <- function(){
   resultDF <- normalize(resultDF, rawdata, c("Q13 (Before)", "Q15 (Before)"), 1, 6, "Understanding of Good life")
   resultDF <- normalize(resultDF, rawdata, c("Q2 (Before)", "Q14 (Before)", "Q16 (Before)", "Q17 (Before)"), 1, 6, "Appreciation of Diversity")
   resultDF <- binarize(resultDF, rawdata,"Sex", "F", "M", "Sex")
-  resultDF[, "nSci"] <- rowSums(rawdata[, c("Phy", "Chem", "Bio", "Com Sci", "Inter Sci")], na.rm = TRUE)
+  resultDF[, "nSci"] <- rowSums(rawdata[, c("Phy", "Chem", "Bio", "Com Sci", "Inter Sci")] > 0, na.rm = TRUE)
   resultDF <- normalize(resultDF, resultDF, "nSci", 0, 3, "nSci")
-  resultDF[, "nNonSci"] <- rowSums(rawdata[, c("Eng Lit", "Chin Lit", "History", "Chin History", "Ethics & RS", "Music", "Visual Art", "Econ", "Geog")], na.rm = TRUE)
+  resultDF[, "nNonSci"] <- rowSums(rawdata[, c("Eng Lit", "Chin Lit", "History", "Chin History", "Ethics & RS", "Music", "Visual Art", "Econ", "Geog")] > 0, na.rm = TRUE)
   resultDF <- normalize(resultDF, resultDF, "nNonSci", 0, 3, "nNonSci")
   
-  resultDF <- eng_prof(resultDF, rawdata, "Eng prof")
+  resultDF <- eng_prof_new(resultDF, rawdata, "Eng prof")
   resultDF <- normalize(resultDF, resultDF, "Eng prof", 0, 2, "Eng prof")
   resultDF <- normalize(resultDF, rawdata, "Year of Study", 1, 4, "Year of Study")
   resultDF <- binarize(resultDF, rawdata, "Faculty", NA, c("ART", "CCST", "EDU","SLAW","SSF"), "Faculty_Art")
@@ -127,21 +136,25 @@ preprocess <- function(){
   resultDF <- binarize(resultDF, rawdata, "Faculty", NA, c("BAF", "BASCI", "BASSF"), "Faculty_Bus")
   resultDF <- gradeToDec(resultDF, rawdata, "Grade", "Grade_dec")
   resultDF <- normalize(resultDF, rawdata, "cGPA (Before)", 0, 4, "cGPA (Before)")
-  resultDF[rawdata[, "cGPA (Before)"] == 0 & rawdata[, "Enrollment Term"] == "1516T1" & rawdata[, "Year of Study"] == 1, "cGPA (Before)"] <- NA
-  resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "Cantonese", "Medium_Can")
-  resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "English", "Medium_Eng")
-  resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "Putonghua", "Medium_Put")
+  resultDF[rawdata[, "cGPA (Before)"] == 0 & rawdata[, "Enrollment Term"] == "1617T1" & rawdata[, "Year of Study"] == 1, "cGPA (Before)"] <- NA
+  #resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "Cantonese", "Medium_Can")
+  #resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "English", "Medium_Eng")
+  #resultDF <- binarize(resultDF, rawdata, "Medium of Instruction", NA, "Putonghua", "Medium_Put")
   resultDF <- binarize(resultDF, rawdata, "First GEF?", "No", NA, "First GEF")
   
   
-  resultDF <- textToDec(resultDF, rawdata, "Q18 (Assigned Text Read)", "Q18 (Assigned Text Read)")
-  resultDF <- textToDec(resultDF, rawdata, "Q19 (Chinese Translation)", "Q19 (Chinese Translation)")
-  resultDF <- percentToDec(resultDF, rawdata, "Q20 (Text/week)", "Q20 (Text/week)")
-  resultDF <- timeToDec(resultDF, rawdata, "Q21 (Time/week)", "Q21 (Time/week)")
-  resultDF <- percentToDec(resultDF, rawdata, "Q22 (% Lecture)", "Q22 (% Lecture)")
+  #resultDF <- textToDec(resultDF, rawdata, "Q18 (Assigned Text Read)", "Q18 (Assigned Text Read)")
+  ##resultDF <- textToDec(resultDF, rawdata, "Q19 (Chinese Translation)", "Q19 (Chinese Translation)")
+  #resultDF <- percentToDec(resultDF, rawdata, "Q20 (Text/week)", "Q20 (Text/week)")
+  #resultDF <- timeToDec(resultDF, rawdata, "Q21 (Time/week)", "Q21 (Time/week)")
+  #resultDF <- percentToDec(resultDF, rawdata, "Q22 (% Lecture)", "Q22 (% Lecture)")
+  sapply(unique(rawdata$`Teacher Number`), FUN = function(x){
+    resultDF <<- binarize(resultDF, rawdata, "Teacher Number", NA, x, paste("Teacher Number", x, sep = "_"))
+  })
+  #resultDF <- resultDF[rawdata$Subject == "UGFN", ]
   # Eliminate records with NA values
   resultDF <- resultDF[rowSums(is.na(resultDF)) == 0, ]
   return(resultDF)
 }
 resultDF <- preprocess()
-write.csv(resultDF, file = "./nn_grade_prediction/preprocessed_witheffort.csv", row.names = FALSE)
+write.csv(resultDF, file = "./nn_grade_prediction/preprocessed_new.csv", row.names = FALSE)

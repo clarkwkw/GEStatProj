@@ -12,6 +12,7 @@ import tensorflow as tf
 import random
 import sys
 import signal
+import visualization as vis
 
 _forced_quit = False
 
@@ -21,6 +22,7 @@ _multi_thread = 10
 
 # No. of cross validation needs to be performed
 _cross_validation = 10
+
 
 # Calculate mean square error between predicted values and true values
 def cal_mse(y, y_):
@@ -129,7 +131,7 @@ class Neural_Network:
 		self.biases = biases
 		self.network = network
 
-	def train(self):
+	def train(self, visualize = False):
 		# The following is just some definition for Tensorflow library, the training has not started yet
 
 		# Placeholders for the network required by the Tensorflow library
@@ -148,9 +150,6 @@ class Neural_Network:
 		# The library should improve the network according to mean square error
 		optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(mse)
 
-		# Set up an initializer for the above variables/ placeholders
-		init = tf.initialize_all_variables()
-
 		# Obtain the first fold of training and testing data
 		test_set, train_set = self.dataset.fold_partition(_cross_validation)
 
@@ -161,6 +160,18 @@ class Neural_Network:
 
 		# Starting training with cross validation
 		for fold_no in range(_cross_validation):
+			# Set up an initializer for the above variables/ placeholders
+			tf_version = float(tf.__version__[0:3])
+			init = 0
+			if tf_version < 1:
+				init = tf.initialize_all_variables()
+			else:
+				init = tf.global_variables_initializer()
+
+			sess = tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread))
+			if visualize:
+				mse_plot = vis.MSEPlot()
+				arrays_plot = vis.ArraysPlot(fold_no, "Input Layer")
 
 			print ("Fold", (fold_no+1), ":", end = " ")
 			sys.stdout.flush()
@@ -169,39 +180,48 @@ class Neural_Network:
 			decider = Train_decider()
 
 
-			with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread)) as sess:
-				sess.run(init)
+			sess.run(init)
 
-				for epoch in range(self.training_epocs):
+			for epoch in range(self.training_epocs):
+				
 
-					# Run the defined optimizer with training data & testing data
-					_, c = sess.run([optimizer, mse], feed_dict = {X: self.dataset.X[train_set], Y: self.dataset.Y[train_set]})
+				# Run the defined optimizer with training data & testing data
+				_, c = sess.run([optimizer, mse], feed_dict = {X: self.dataset.X[train_set], Y: self.dataset.Y[train_set]})
+				
+				# It is time to display progress and evluate the network
+				if epoch % self.display_step == 0:
 					
-					# It is time to display progress and evluate the network
-					if epoch % self.display_step == 0:
-						#print "Epoch:", "%06d" % (epoch+1), "MSE =", "%.4f" % (c)
-						
-						# Calculate the mse on testing data
-						test_pred = sess.run([pred], feed_dict = {X: self.dataset.X[test_set]})
-						test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
-						#print "=====> Test MSE =", "%.4f" % test_mse
-						
-						# Let the decider know the current testing mse
-						if decider.update(test_mse) == False:
-							break
+					# Calculate the mse on testing data
+					test_pred = sess.run([pred], feed_dict = {X: self.dataset.X[test_set]})
+					test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
+					if visualize:
+						mse_plot.add_point(epoch, test_mse, 1)
+						mse_plot.add_point(epoch, c, 0)
+						weights1_arr = sess.run([self.weights['h1']], feed_dict = {})
+						arrays_plot.add_instance(np.asarray(weights1_arr)[0], epoch)
 
-				# Training for one fold is over, calculate the final testing mse
-				test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
+					# Let the decider know the current testing mse
+					if decider.update(test_mse) == False:
+						break
 
-				test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
-				print (test_mse)
+			# Training for one fold is over, calculate the final testing mse
+			test_pred = pred.eval(feed_dict = {X: self.dataset.X[test_set]}, session = sess)
 
-				# Save the error. If this is the lowest so far, also save the network configuration
-				global_mse.append(test_mse)
-				if test_mse < min_mse:
-					min_mse = test_mse
-					saver = tf.train.Saver()
-					saver.save(sess, "./Tmp.ckpt", global_step = 1)
+			test_mse = cal_mse(test_pred, self.dataset.Y[test_set])
+			print (test_mse)
+
+			# Save the error. If this is the lowest so far, also save the network configuration
+			global_mse.append(test_mse)
+			if test_mse < min_mse:
+				min_mse = test_mse
+				saver = tf.train.Saver()
+				saver.save(sess, "./Tmp.ckpt", global_step = 1)
+
+			if visualize:
+				arrays_plot.generate_animation("summary")
+				arrays_plot.delete_instances()
+				mse_plot.show()
+
 			if _forced_quit:
 				break;
 
