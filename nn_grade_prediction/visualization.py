@@ -5,9 +5,18 @@ except ImportError:
 	print("Please install imageio (2.1.2) for advance visualisation")
 	_imageio_imported = False
 import os
+import errno
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
+def make_sure_path_exists(path):
+	try:
+		os.makedirs(path)
+	except OSError as exception:
+		if exception.errno != errno.EEXIST:
+			raise
+
+make_sure_path_exists("./visualize")
 
 class MSEPlot:
 	def __init__(self):
@@ -30,8 +39,10 @@ class MSEPlot:
 		plt.ylabel("Error")
 		plt.colorbar(ticks = [0, 1], format = formatter)
 		plt.gca().set_ylim([0, 0.4])
+		fig1.show()
 		plt.show()
 		plt.clf()
+		plt.close(fig1)
 
 class ArraysPlot:
 	def __init__(self, file_prefix, weight_name):
@@ -51,6 +62,7 @@ class ArraysPlot:
 		plt.colorbar(img,cmap=cmap)
 		fig2.savefig(file_name)
 		plt.clf()
+		plt.close(fig2)
 
 	def generate_animation(self, output_suffix):
 		if not _imageio_imported:
