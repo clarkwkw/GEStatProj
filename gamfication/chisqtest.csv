@@ -1,0 +1,6 @@
+"","statistic.X-squared","parameter.df","p.value","method"
+"Sex","10.8049327128916","1","0.00101230004520778","Pearson's Chi-squared test with Yates' continuity correction"
+"Eng","4.23505892255892","1","0.0395972491085551","Pearson's Chi-squared test with Yates' continuity correction"
+"KEEP","0.439605580389897","1","0.50731288635083","Pearson's Chi-squared test with Yates' continuity correction"
+"Fac","19.9062843306504","9","0.0184996478625122","Pearson's Chi-squared test"
+"Year","0.491973012410881","1","0.483048506470181","Pearson's Chi-squared test with Yates' continuity correction"
