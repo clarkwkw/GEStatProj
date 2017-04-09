@@ -14,3 +14,10 @@ quantify <- function(response, choice, converted_num) {
 removeNA <- function(x) {
   x[!is.na(x)]
 }
+
+# l = list of test
+log.test <- function(l, filepath, test.names = NULL) {
+  r <- Reduce(function(result, test) result <- rbind(result, unlist(test)), l, init = NULL)
+  rownames(r) <- test.names
+  write.csv(r, file = filepath)
+}
