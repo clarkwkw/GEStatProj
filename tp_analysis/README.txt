@@ -102,4 +102,6 @@ The following changes are made:
 [3]  Sklearn package is used to count words. It is also used to eliminate
      stopwords.
 
-[4]  wordfreq.py is obsoleted
+[4]  Fixed wrong page number of each chapter
+
+[5]  wordfreq.py is obsoleted
