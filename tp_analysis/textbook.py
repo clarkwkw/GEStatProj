@@ -6,6 +6,11 @@ infile = 'Nature-2nd-Edited.pdf'
 outfile = 'top30.txt'
 topn = 30
 
+'''
+chapter_pg = [
+['1a',15,19]
+]
+'''
 chapter_pg = [
 ['1a',15,19],
 ['1b',21,25],
@@ -24,8 +29,7 @@ chapter_pg = [
 ['11b',285,300]
 ]
 
-chap_vectorizers = {}
-chap_stats = {}
+chap_texts = {}
 is_init = False
 
 # The stop words listed in
@@ -39,37 +43,39 @@ def init():
 	print('Reading textbook...')
 	print('> Number of pages = %d' % pgn)
 	for ch in chapter_pg:
-		print("> Initiating chapter %s"%ch[0])
-		vectorizer = CountVectorizer(stop_words = 'english')
+		print("> Initializing chapter %s"%ch[0])
 		chapter_text = []
 		for i in range(ch[1]-1,ch[2]):
 			pg = pdfReader.getPage(i).extractText()
 			chapter_text.append(pg)
 		chapter_text = ' '.join(chapter_text)
-		chap_stats[ch[0]] = vectorizer.fit_transform([chapter_text]).toarray()[0]
-		chap_vectorizers[ch[0]] = vectorizer
-
+		chap_texts[ch[0]] = chapter_text
 	is_init = True
 
 def getTopVocabs(ch, n = 30):
 	if not is_init:
 		init()
-	if ch not in chap_vectorizers:
+	if ch not in chap_texts:
 		raise Exception('Invalid Chapter ch')
-	freq = dict(chap_vectorizers[ch].vocabulary_)
-	
+
+	vectorizer = CountVectorizer(stop_words = 'english')
+	freq = vectorizer.fit_transform([chap_texts[ch]]).toarray()[0]
+	word_index_table = vectorizer.vocabulary_
+	word_freq_pair = []
+
 	# Retrieve frequency of each word
-	for vocab in freq:
-		freq[vocab] = chap_stats[ch][freq[vocab]]
-	tuples = [x for x in list(freq.items())]
-	tuples = sorted(tuples, key = lambda x: x[1], reverse = True)
+	for vocab in word_index_table:
+		index = word_index_table[vocab]
+		pair = (vocab, freq[index])
+		word_freq_pair.append(pair)
+
+	word_freq_pair = sorted(word_freq_pair, key = lambda x: x[1], reverse = True)
 	
 	i, count = (0, 0)
-	while count < n and i < len(tuples):
-		#if tuples[i][0] in words.words():
-		if tuples[i][0].isalpha():
+	while count < n and i < len(word_freq_pair):
+		if word_freq_pair[i][0].isalpha() and len(word_freq_pair[i][0]) >= 3:
 			count += 1
-			yield tuples[i]
+			yield word_freq_pair[i]
 		i += 1
 
 if __name__ == '__main__':
