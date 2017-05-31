@@ -88,12 +88,12 @@ Based on Kai Ming's modification, the following changes are made:
 [4]  The output is now saved into a file 'outfile' instead of stdout.
 
 ######################################################################
-2017/05/30 [09:35] Tue
+2017/05/31 [14:10] Wed
 ######################################################################
 
 The following changes are made:
 
-[1]  Refactored code into functions
+[1]  Refactored word_count.py and renamed as textbok.py
 
 [2]  Tried to use nltk.words.words() to filter words. Found that some
      important names like 'Socrates', 'Glaucon' and 'Plato' are filtered.
@@ -105,3 +105,6 @@ The following changes are made:
 [4]  Fixed wrong page number of each chapter
 
 [5]  wordfreq.py is obsoleted
+
+[6]  Added similarity.py to calculate cosine similarity between sample 
+     term paper and texts from textbook
