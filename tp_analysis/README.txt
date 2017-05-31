@@ -93,7 +93,7 @@ Based on Kai Ming's modification, the following changes are made:
 
 The following changes are made:
 
-[1]  Refactored word_count.py and renamed as textbok.py
+[1]  Refactored word_count.py and renamed as textbook.py
 
 [2]  Tried to use nltk.words.words() to filter words. Found that some
      important names like 'Socrates', 'Glaucon' and 'Plato' are filtered.
