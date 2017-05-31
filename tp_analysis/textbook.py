@@ -1,5 +1,6 @@
 import PyPDF2
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import words
 
 infile = 'Nature-2nd-Edited.pdf'
@@ -51,6 +52,20 @@ def init():
 		chapter_text = ' '.join(chapter_text)
 		chap_texts[ch[0]] = chapter_text
 	is_init = True
+
+def getOrderedText():
+	if not is_init:
+		init()
+
+	texts = []
+	for [ch, _, _] in chapter_pg:
+		texts.append(chap_texts[ch])
+	return texts
+
+def getTfidfVectorizer():
+	vectorizer = TfidfVectorizer(stop_words = 'english')
+	vectorizer.fit(getOrderedText())
+	return vectorizer
 
 def getTopVocabs(ch, n = 30):
 	if not is_init:

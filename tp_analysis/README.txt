@@ -106,5 +106,5 @@ The following changes are made:
 
 [5]  wordfreq.py is obsoleted
 
-[6]  Added similarity.py to calculate cosine similarity between sample 
-     term paper and texts from textbook
+[6]  Added similarity_tf.py and similarity_tfidf to calculate cosine similarity
+     between sample term paper and texts from textbook using 2 measures
