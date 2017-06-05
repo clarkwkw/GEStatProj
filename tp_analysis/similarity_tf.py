@@ -3,6 +3,7 @@ import numpy as np
 from sample import Sample
 import textbook
 import nltk
+import pandas
 
 sample_folder = "./samples"
 out_file = "similarity.csv"
@@ -67,15 +68,8 @@ for i in range(len(samples)):
 		sample_vect = dict_to_arr(sample_vocab_freq, key_vocabs_chapters[j])
 		similarity[i, j] = cal_similarity(sample_vect, chapter_vects[j])
 
+chapter_titles = [ch[0] for ch in textbook.chapter_pg]
+similarity_df = pandas.DataFrame(similarity, columns = chapter_titles)
+similarity_df.index = [sample.name for sample in samples]
 
-# Output to file
-f = open(out_file, 'w')
-for i in range(similarity.shape[1]):
-	f.write(","+textbook.chapter_pg[i][0])
-f.write("\n")
-for i in range(similarity.shape[0]):
-	f.write(samples[i].name)
-	for j in range(similarity.shape[1]):
-		f.write(','+str(similarity[i][j]))
-	f.write("\n")
-f.close()
+similarity_df.to_csv(out_file)
