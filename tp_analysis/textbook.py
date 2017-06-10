@@ -9,7 +9,7 @@ topn = 30
 
 '''
 chapter_pg = [
-['1a',15,19]
+['all',15,300]
 ]
 '''
 chapter_pg = [
@@ -29,6 +29,7 @@ chapter_pg = [
 ['11a',269,283],
 ['11b',285,300]
 ]
+
 
 chap_texts = {}
 is_init = False
@@ -65,6 +66,7 @@ def getOrderedText():
 def getTfidfVectorizer():
 	vectorizer = TfidfVectorizer(stop_words = 'english')
 	vectorizer.fit(getOrderedText())
+	print("%d words are used."%len(vectorizer.vocabulary_.keys()))
 	return vectorizer
 
 def getTopVocabs(ch, n = 30):
@@ -88,7 +90,8 @@ def getTopVocabs(ch, n = 30):
 	
 	i, count = (0, 0)
 	while count < n and i < len(word_freq_pair):
-		if word_freq_pair[i][0].isalpha() and len(word_freq_pair[i][0]) >= 3:
+		#if word_freq_pair[i][0].isalpha() and len(word_freq_pair[i][0]) >= 3:
+		if word_freq_pair[i][0].isalpha():
 			count += 1
 			yield word_freq_pair[i]
 		i += 1

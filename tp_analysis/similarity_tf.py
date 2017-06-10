@@ -22,8 +22,11 @@ except FileNotFoundError:
 	exit(-1)
 
 def normalize(v):
-	length = np.sum(v)
-	return np.divide(v, length)
+	norm = np.linalg.norm(v)
+	if norm != 0:
+		return v/norm
+	else:
+		return v
 
 def dict_to_arr(dict, fields = []):
 	result = []
