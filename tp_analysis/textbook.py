@@ -63,6 +63,9 @@ def getOrderedText():
 		texts.append(chap_texts[ch])
 	return texts
 
+def getChapterTitles():
+	return [chapter[0] for chapter in chapter_pg]
+
 def getTfidfVectorizer():
 	vectorizer = TfidfVectorizer(stop_words = 'english')
 	vectorizer.fit(getOrderedText())

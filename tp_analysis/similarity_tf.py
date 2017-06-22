@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from sample import Sample
+import sample
 import textbook
 import nltk
 import pandas
@@ -8,18 +8,6 @@ import pandas
 sample_folder = "./samples"
 out_file = "similarity.csv"
 n_key_vocabs = 30
-
-try:
-	files = os.listdir(sample_folder)
-	sample_names = []
-	for file in files:
-		file_name = file.split('.')
-		if file_name[len(file_name) - 1] == 'txt':
-			sample_names.append(file)
-
-except FileNotFoundError:
-	print("Folder 'samples' does not exist, abort,")
-	exit(-1)
 
 def normalize(v):
 	norm = np.linalg.norm(v)
@@ -41,7 +29,7 @@ def cal_similarity(v1, v2):
 	dot_product = np.dot(v1, v2)
 	return dot_product
 
-samples = [Sample(sample_folder+'/'+x) for x in sample_names]
+samples = sample.get_samples(sample_folder)
 similarity = np.zeros((len(samples), len(textbook.chapter_pg)))
 key_vocabs_all = {}
 key_vocabs_chapters = []
@@ -71,8 +59,7 @@ for i in range(len(samples)):
 		sample_vect = dict_to_arr(sample_vocab_freq, key_vocabs_chapters[j])
 		similarity[i, j] = cal_similarity(sample_vect, chapter_vects[j])
 
-chapter_titles = [ch[0] for ch in textbook.chapter_pg]
-similarity_df = pandas.DataFrame(similarity, columns = chapter_titles)
-similarity_df.index = [sample.name for sample in samples]
+similarity_df = pandas.DataFrame(similarity, columns = textbook.getChapterTitles())
+similarity_df.index = [sample.get_identifier() for sample in samples]
 
 similarity_df.to_csv(out_file)
