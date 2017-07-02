@@ -1,0 +1,16 @@
+Process of selecting predictors
+
+1. cGPA
+  significant but not enough info (adj R^2 = 0.2677)
+  
+2. cGPA + G1 to G5 learning outcome
+  only cGPA and G1 significant, but adj R^2 (0.2723) not increase much 
+  test the model for prediction using 1617T1 data
+  Root mean square = 0.4523309
+  
+  when using test data to construct the same model,
+  only cGPA is significant
+
+  => G1 to G5 have low explaining power
+  
+  
