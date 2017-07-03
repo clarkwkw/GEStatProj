@@ -15,7 +15,7 @@ def batch_data(series, batch_size):
 		arr.append(series[start:end])
 	return arr
 
-def by_predefined_words(train_samples, valid_samples, words):
+def by_predefined_words(train_samples, valid_samples = [], words = []):
 	vocabs = {}
 	for i in range(len(words)):
 		vocabs[words[i]] = i
@@ -27,7 +27,7 @@ def by_predefined_words(train_samples, valid_samples, words):
 	valid_matrix = vectorizer.transform(valid_texts).todense()
 	return (train_matrix, valid_matrix, words)
 
-def by_idf(train_samples, valid_samples, top, bottom):
+def by_idf(train_samples, valid_samples = [], top = 0, bottom = 0):
 	vectorizer = TfidfVectorizer(stop_words = 'english')
 	train_texts = [sample.text for sample in train_samples]
 	vectorizer.fit(train_texts)

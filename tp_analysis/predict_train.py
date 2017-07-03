@@ -35,6 +35,12 @@ biases = {
 def get_label(sample):
 	return sample.understand
 
+def mkdir(dir):
+	try:
+		os.mkdir(dir)
+	except FileExistsError:
+		pass
+
 if len(os.listdir(_model_folder)) > 0:
 	ans = input("Found something in '%s', which may be overwitten.\nProceed? [y/n]: "%_model_folder)
 	if ans.lower() == 'n':
@@ -46,6 +52,7 @@ batches = preprocessing.batch_data(samples, cross_valid)
 for i in range(cross_valid):
 	valid_samples = batches[i]
 	train_samples = []
+	mkdir("%s/%d"%(_model_folder, i+1))
 	for j in range(cross_valid):
 		if j != i:
 			train_samples.extend(batches[j])
@@ -54,12 +61,13 @@ for i in range(cross_valid):
 	train_labels = np.asarray([get_label(sample) for sample in train_samples])
 	valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
 	nn = neural_network.Neural_Network()
-	nn.configure_parameters(learning_rate, training_epocs, display_step, "%s/%d.ckpt"%(_model_folder, i))
+	nn.configure_parameters(learning_rate, training_epocs, display_step)
 	nn.configure_network(weights, biases, network)
-	valid_mse = nn.train(train_matrix, train_labels, valid_matrix, valid_labels, True)
+	valid_mse = nn.train(train_matrix, train_labels, valid_matrix, valid_labels, "%s/%d/"%(_model_folder, i+1), True)
 	conf = {
 		"words": words,
 		"valid_mse": valid_mse
 	}
-	with open("%s/%d.json"%(_model_folder, i), "w") as f:
+	print("Fold %2d: %.4f"%(i+1, valid_mse))
+	with open("%s/%d/conf.json"%(_model_folder, i+1), "w") as f:
 		f.write(json.dumps(conf, indent = 4, sort_keys = True))
