@@ -23,6 +23,18 @@ def get_samples(sample_folder):
 		print("Folder of samples does not exist, abort.")
 		exit(-1)
 
+def partition(samples, folds = 10, index_only = False):
+	if folds < 1 or folds > len(samples):
+		raise Exception("'folds' must be between 1 and len(sample)")
+	start, end = (0, 0)
+	for i in range(folds):
+		start = end
+		end += (len(samples) - end)//(folds - i)
+		if index_only:
+			yield (start, end)
+		else:
+			yield samples[start:end]
+
 # [Type]-[Name]-[No]-[think]-[understand]-[language]-[presentation].txt
 class Sample:
 	def __init__(self, path):

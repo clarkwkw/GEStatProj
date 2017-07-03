@@ -75,11 +75,16 @@ def getTfidfVectorizer():
 def getTopVocabs(ch, n = 30):
 	if not is_init:
 		init()
-	if ch not in chap_texts:
+	if ch == 'all':
+		text = list(chap_texts.values())
+		text = '\n'.join(text)
+	elif ch not in chap_texts:
 		raise Exception('Invalid Chapter ch')
+	else:
+		text = chap_texts[ch]
 
 	vectorizer = CountVectorizer(stop_words = 'english')
-	freq = vectorizer.fit_transform([chap_texts[ch]]).toarray()[0]
+	freq = vectorizer.fit_transform([text]).toarray()[0]
 	word_index_table = vectorizer.vocabulary_
 	word_freq_pair = []
 
@@ -101,10 +106,16 @@ def getTopVocabs(ch, n = 30):
 
 if __name__ == '__main__':
 	f = open(outfile,'w', encoding='utf-8')
+	'''
 	for ch in chapter_pg:
 		i = 0
 		print('\n{:=^26}\n'.format(' Chapter '+ch[0]+' '), file = f)
 		for x in getTopVocabs(ch[0], topn):
 			print('%4d: %-15s %4d' % (i+1, x[0], x[1]), file = f)
 			i += 1
+	'''
+	i = 0
+	for x in getTopVocabs('all', 50):
+		print('%4d: %-15s %4d' % (i+1, x[0], x[1]), file = f)
+		i += 1
 	f.close()
