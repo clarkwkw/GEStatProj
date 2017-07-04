@@ -3,16 +3,16 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import words
 
-infile = 'Nature-2nd-Edited.pdf'
-outfile = 'top30.txt'
-topn = 30
+_infile = 'Nature-2nd-Edited.pdf'
+_outfile = 'top30.txt'
+_topn = 30
 
 '''
-chapter_pg = [
+_chapter_pg = [
 ['all',15,300]
 ]
 '''
-chapter_pg = [
+_chapter_pg = [
 ['1a',15,19],
 ['1b',21,25],
 ['2',27,57],
@@ -31,57 +31,57 @@ chapter_pg = [
 ]
 
 
-chap_texts = {}
-is_init = False
+_chap_texts = {}
+_is_init = False
 
 # The stop words listed in
 # https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/feature_extraction/stop_words.py
 # would be ignored.
 
 def init():
-	global is_init
-	pdfReader = PyPDF2.PdfFileReader(open(infile,'rb'))
+	global _is_init
+	pdfReader = PyPDF2.PdfFileReader(open(_infile,'rb'))
 	pgn = pdfReader.numPages
 	print('Reading textbook...')
 	print('> Number of pages = %d' % pgn)
-	for ch in chapter_pg:
+	for ch in _chapter_pg:
 		print("> Initializing chapter %s"%ch[0])
 		chapter_text = []
 		for i in range(ch[1]-1,ch[2]):
 			pg = pdfReader.getPage(i).extractText()
 			chapter_text.append(pg)
 		chapter_text = ' '.join(chapter_text)
-		chap_texts[ch[0]] = chapter_text
-	is_init = True
+		_chap_texts[ch[0]] = chapter_text
+	_is_init = True
 
 def getOrderedText():
-	if not is_init:
+	if not _is_init:
 		init()
 
 	texts = []
-	for [ch, _, _] in chapter_pg:
-		texts.append(chap_texts[ch])
+	for [ch, _, _] in _chapter_pg:
+		texts.append(_chap_texts[ch])
 	return texts
 
 def getChapterTitles():
-	return [chapter[0] for chapter in chapter_pg]
+	return [chapter[0] for chapter in _chapter_pg]
 
 def getTfidfVectorizer():
 	vectorizer = TfidfVectorizer(stop_words = 'english')
 	vectorizer.fit(getOrderedText())
-	print("%d words are used."%len(vectorizer.vocabulary_.keys()))
+	#print("%d words are used."%len(vectorizer.vocabulary_.keys()))
 	return vectorizer
 
 def getTopVocabs(ch, n = 30):
-	if not is_init:
+	if not _is_init:
 		init()
 	if ch == 'all':
-		text = list(chap_texts.values())
+		text = list(_chap_texts.values())
 		text = '\n'.join(text)
-	elif ch not in chap_texts:
+	elif ch not in _chap_texts:
 		raise Exception('Invalid Chapter ch')
 	else:
-		text = chap_texts[ch]
+		text = _chap_texts[ch]
 
 	vectorizer = CountVectorizer(stop_words = 'english')
 	freq = vectorizer.fit_transform([text]).toarray()[0]
@@ -105,12 +105,12 @@ def getTopVocabs(ch, n = 30):
 		i += 1
 
 if __name__ == '__main__':
-	f = open(outfile,'w', encoding='utf-8')
+	f = open(_outfile,'w', encoding='utf-8')
 	'''
-	for ch in chapter_pg:
+	for ch in _chapter_pg:
 		i = 0
 		print('\n{:=^26}\n'.format(' Chapter '+ch[0]+' '), file = f)
-		for x in getTopVocabs(ch[0], topn):
+		for x in getTopVocabs(ch[0], _topn):
 			print('%4d: %-15s %4d' % (i+1, x[0], x[1]), file = f)
 			i += 1
 	'''

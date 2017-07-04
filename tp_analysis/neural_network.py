@@ -2,7 +2,6 @@ import numpy as np
 import sys
 import signal
 import tensorflow as tf
-import visualization as vis
 
 _multi_thread = 4
 _forced_quit = False
@@ -23,6 +22,9 @@ class Neural_Network:
 		self.network = lambda x: network(x, self.weights, self.biases)
 
 	def train(self, train_samples_matrix, train_labels, valid_samples_matrix, valid_labels, save_name, visualize = False):
+		if visualize:
+			import visualization as vis
+
 		saver = tf.train.Saver()
 		X = tf.placeholder(tf.float32, [None, train_samples_matrix.shape[1]])
 		Y = tf.placeholder(tf.float32, [None, ])
