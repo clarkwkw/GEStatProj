@@ -3,7 +3,7 @@ import sys
 import signal
 import tensorflow as tf
 
-_multi_thread = 4
+_multi_thread = 8
 _forced_quit = False
 
 def cal_mse(y, y_):
@@ -117,7 +117,6 @@ class Train_decider:
 		return self.cont
 
 	def cont(self):
-		return True
 		if _forced_quit:
 			return False
 		return self.cont
