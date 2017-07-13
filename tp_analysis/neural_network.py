@@ -10,84 +10,95 @@ def cal_mse(y, y_):
 		return np.mean(np.square(y - y_))
 
 class Neural_Network:
+	def __init__(self, _n_factors = None, _hidden_nodes = [], _learning_rate = 0.001, from_save = None):
+		self._hidden_nodes = _hidden_nodes
+		self._weights = []
+		self._biases = []		
+		self._learning_rate = _learning_rate
+		self._trained = False
+		self._graph = tf.Graph()
+		self._sess = tf.Session(graph = self._graph, config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread))
+		with self._graph.as_default() as g:
+			if from_save is None:
+				n_last_layer = _n_factors
+				n_next_layer = 0
+				for i in range(0, len(_hidden_nodes) + 1):
+					if i >= len(_hidden_nodes):
+						n_next_layer = 1
+					else:
+						n_next_layer = _hidden_nodes[i]
+					self._weights.append(tf.get_variable("w_"+str(i), initializer = tf.random_normal([n_last_layer, n_next_layer])))
+					self._biases.append(tf.get_variable("b_"+str(i), initializer = tf.random_normal([n_next_layer])))
+					if i < len(_hidden_nodes):
+						n_last_layer = _hidden_nodes[i]
+				self._X = tf.placeholder(tf.float32, [None, _n_factors], name = "X")
+				self._y = tf.placeholder(tf.float32, [None], name = "y")
+				self._pred = self.__network(self._X)
+				tf.add_to_collection("pred", self._pred)
+				self._cost = tf.reduce_mean(tf.square(self._pred - self._y))
+				self._optimizer = tf.train.AdamOptimizer(self._learning_rate).minimize(self._cost)
+				init = tf.global_variables_initializer()
+				self._sess.run(init)	
+			else:
+				saver = tf.train.import_meta_graph(from_save+'/model.ckpt.meta')
+				saver.restore(self._sess, from_save+'/model.ckpt')
+				self._X = g.get_tensor_by_name("X:0")
+				self._y = g.get_tensor_by_name("y:0")
+				self._pred =  tf.get_collection("pred")[0]
+				self._trained = True
+		tf.reset_default_graph()
 
-	def configure_parameters(self, learning_rate, training_epocs, display_step):
-		self.learning_rate = learning_rate
-		self.training_epocs = training_epocs
-		self.display_step = display_step
+	def destroy(self):
+		self._sess.close()
 
-	def configure_network(self, weights, biases, network):
-		self.weights = weights
-		self.biases = biases
-		self.network = lambda x: network(x, self.weights, self.biases)
+	def train(self, train_matrix, train_labels, valid_matrix = None, valid_labels = None, adaptive = True, step = 300, max_iter = 10000):
+		if self._trained:
+			raise Exception("Model already trained.")
+		valid_cost = None
+		with self._graph.as_default() as g:
+			decider = None
+			if adaptive:
+				decider = Train_decider()
+			for i in range(max_iter):
+				_, train_cost = self._sess.run([self._optimizer, self._cost], feed_dict = {self._X: train_matrix, self._y: train_labels})
+				if adaptive and (i+1)%step == 0:
+					valid_predict = self._pred.eval(feed_dict = {self._X: valid_matrix}, session = self._sess)
+					valid_cost = cal_mse(valid_predict, valid_labels)
+					#print("Epoch %5d: %.4f"%(i+1, valid_cost))
+					if decider.update(valid_cost) == False:
+						break
+			if adaptive:
+				valid_predict = self._pred.eval(feed_dict = {self._X: valid_matrix}, session = self._sess)
+				valid_cost = cal_mse(valid_predict, valid_labels)
 
-	def train(self, train_samples_matrix, train_labels, valid_samples_matrix, valid_labels, save_name, visualize = False):
-		if visualize:
-			import visualization as vis
+		tf.reset_default_graph()
+		self._trained = True
+		if adaptive:
+			return valid_cost
 
-		saver = tf.train.Saver()
-		X = tf.placeholder(tf.float32, [None, train_samples_matrix.shape[1]])
-		Y = tf.placeholder(tf.float32, [None, ])
-		pred = self.network(X)
-		mse = tf.reduce_mean(tf.square(pred - Y))
-		optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(mse)
+	def test(self, matrix):
+		if not self._trained:
+			raise Exception("Model not trained.")
+		with self._graph.as_default() as g:
+			tmp_result = self._sess.run(self._pred, feed_dict = {self._X: matrix})
+		tf.reset_default_graph()
+		return [y[0] for y in tmp_result]
 
-		signal.signal(signal.SIGINT, signal_handler)
+	def __network(self, X):
+		tmp_result = X
+		for i in range(len(self._hidden_nodes) + 1):
+			tmp_result = tf.add(tf.matmul(tmp_result, self._weights[i]), self._biases[i])
+			if i < len(self._hidden_nodes):
+				tmp_result = tf.nn.sigmoid(tmp_result)
+		return tmp_result
 
-		tf_version = float(tf.__version__[0:3])
-		init = 0
-		if tf_version < 1:
-			init = tf.initialize_all_variables()
-		else:
-			init = tf.global_variables_initializer()
-		sess = tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread))
-		sess.run(init)
-		decider = Train_decider()
-		if visualize:
-			mse_plot = vis.MSEPlot()
-
-		for epoch in range(self.training_epocs):
-			_, c = sess.run([optimizer, mse], feed_dict = {X: train_samples_matrix, Y: train_labels})
-			if epoch % self.display_step == 0:
-				valid_pred = sess.run([pred], feed_dict = {X: valid_samples_matrix})
-				valid_mse = cal_mse(valid_pred, valid_labels)
-				if visualize:
-					mse_plot.add_point(epoch, valid_mse, 1)
-					mse_plot.add_point(epoch, c, 0)
-				if decider.update(valid_mse) == False:
-					break
-
-		valid_pred = sess.run([pred], feed_dict = {X: valid_samples_matrix})
-		valid_mse = cal_mse(valid_pred, valid_labels)
-		if visualize:
-			mse_plot.show()
-		
-		saver.save(sess, save_name+"model.ckpt")
-
-		signal.signal(signal.SIGINT, signal.SIG_DFL)
-		return(valid_mse)
-
-	def test(self, test_samples_matrix, save_path):
-		saver = tf.train.Saver()
-		X = tf.placeholder(tf.float32, [None, test_samples_matrix.shape[1]])
-		Y = tf.placeholder(tf.float32, [None, ])
-		pred = self.network(X)
-		tf_version = float(tf.__version__[0:3])
-		init = 0
-		if tf_version < 1:
-			init = tf.initialize_all_variables()
-		else:
-			init = tf.global_variables_initializer()
-		sess = tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread))
-		sess.run(init)
-		ckpt = tf.train.get_checkpoint_state(save_path)
-		if ckpt and ckpt.model_checkpoint_path:
-			saver.restore(sess, ckpt.model_checkpoint_path)
-		else:
-			print ("Check point file not found. Exit.")
-			return []
-		test_pred = pred.eval(feed_dict = {X: test_samples_matrix}, session = sess)
-		return [y[0] for y in test_pred]
+	def save(self, savedir):
+		if not self._trained:
+			raise Exception("Model not trained.")
+		with self._graph.as_default() as g:
+			saver = tf.train.Saver()
+			save_path = saver.save(self._sess, save_path = savedir+'/model.ckpt')
+		tf.reset_default_graph()
 
 class Train_decider:
 	tolerance = 2
