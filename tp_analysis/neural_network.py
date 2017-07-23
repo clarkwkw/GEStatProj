@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import sys
 import signal
@@ -15,6 +16,7 @@ class Neural_Network:
 		self._weights = []
 		self._biases = []		
 		self._learning_rate = _learning_rate
+		self._n_factors = _n_factors
 		self._trained = False
 		self._graph = tf.Graph()
 		self._sess = tf.Session(graph = self._graph, config=tf.ConfigProto(intra_op_parallelism_threads = _multi_thread))
@@ -99,6 +101,21 @@ class Neural_Network:
 			saver = tf.train.Saver()
 			save_path = saver.save(self._sess, save_path = savedir+'/model.ckpt')
 		tf.reset_default_graph()
+		with open(savedir+"/model_conf.json", "w") as f:
+			init_para = {
+				"_n_factors": self._n_factors,
+				"_hidden_nodes": self._hidden_nodes
+			}
+			f.write(json.dumps(init_para, indent = 4))
+
+	@staticmethod
+	def load(savedir):
+		init_para = None
+		with open(savedir+"/model_conf.json", "r") as f:
+			init_para = json.load(f)
+		model = Neural_Network(from_save = savedir, **init_para)
+		model._trained = True
+		return model
 
 class Train_decider:
 	tolerance = 2

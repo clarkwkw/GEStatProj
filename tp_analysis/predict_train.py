@@ -1,5 +1,6 @@
 import json
 import neural_network
+import svm
 import numpy as np
 import os
 import preprocessing
@@ -10,12 +11,13 @@ import tensorflow as tf
 _sample_folder = "./samples"
 _model_folder = "./models"
 _words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
+_model_type = "NN"
 _attributes = 50
 _strategy_parameters = {
-	#"selection": "tfidf",
-	"words": _words,
-	#"top": 45,
-	#"bottom": 5
+	"selection": "tfidf",
+	"words": "samples",
+	"top": 0,
+	"bottom": 50
 }
 
 learning_rate = 0.001
@@ -52,35 +54,26 @@ def main(run = 1, force_run = False):
 			for j in range(cross_valid):
 				if j != i:
 					train_samples.extend(batches[j])
-			train_matrix, valid_matrix, words, pca_components = preprocessing.preprocess(train_samples, valid_samples, **_strategy_parameters)
+			savedir = "%s/%d/"%(_model_folder, i+1)
+			train_matrix, valid_matrix, words = preprocessing.preprocess(train_samples, valid_samples, savedir = savedir, **_strategy_parameters)
 			train_labels = np.asarray([get_label(sample) for sample in train_samples])
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
-			nn = neural_network.Neural_Network(_attributes, hidden_nodes, learning_rate)
-			valid_mse = nn.train(train_matrix, train_labels, valid_matrix, valid_labels, max_iter = 15000)
-			nn.save("%s/%d/"%(_model_folder, i+1))
-			nn.destroy()
+			model, valid_mse = None, None
+			if _model_type == "NN":
+				model = neural_network.Neural_Network(_attributes, hidden_nodes, learning_rate)
+				valid_mse = model.train(train_matrix, train_labels, valid_matrix, valid_labels, max_iter = 15000)
+			else:
+				model = svm.SVM()
+				valid_mse = model.train(train_matrix, train_labels, valid_matrix, valid_labels)
+			model.save(savedir)
+			model.destroy()
 
 			print("Fold %2d: %.4f"%(i+1, valid_mse))
-			conf = {
-				"init_para":{
-					"_n_factors": _attributes,
-					"_hidden_nodes": hidden_nodes
-				},
-				"words": words, 
-				"valid_mse": valid_mse, 
-				"pca": pca_components is not None
-			}
-			if pca_components is not None:
-				np.save("%s/%d/pca.npy"%(_model_folder, i+1), pca_components)
-			with open("%s/%d/conf.json"%(_model_folder, i+1), "w") as f:
-				f.write(json.dumps(conf, indent = 4, sort_keys = True))
 
 if __name__ == "__main__":
-	main(1, False)
-	'''
+	#main(4, True)
 	while _strategy_parameters["bottom"] >= 0:
-		print("%s-%s, %d, %d"%(_strategy_parameters["words"], _strategy_parameters["selection"], _strategy_parameters["top"], _strategy_parameters["bottom"]))
+		print("%s-%s: %d, %d"%(_strategy_parameters["words"], _strategy_parameters["selection"], _strategy_parameters["top"], _strategy_parameters["bottom"]))
 		main(4, True)
 		_strategy_parameters["top"] += 5
 		_strategy_parameters["bottom"] -= 5
-	'''

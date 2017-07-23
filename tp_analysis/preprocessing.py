@@ -1,5 +1,7 @@
+import json
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 import sample
 import textbook
 
@@ -31,7 +33,36 @@ def by_predefined_words(train_samples, valid_samples = [], words = None):
 	valid_matrix = vectorizer.transform(valid_texts).todense()
 	return (train_matrix, valid_matrix, words)
 
-def preprocess(train_samples, valid_samples = [], top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None):
+def normalize(train_matrix, valid_matrix = None, norm_info = None):
+	n_cols = None
+	norm_dict = {'total': train_matrix.shape[1]}
+	if norm_info is not None:
+		n_cols = norm_info["total"]
+	else:
+		n_cols = train_matrix.shape[1]
+
+	for i in range(n_cols):
+		mean, std = None, None
+		if norm_info is not None:
+			mean = norm_info["%d"%i]["mean"]
+			std = norm_info["%d"%i]["std"]
+		else:
+			mean = np.mean(train_matrix[:, i])
+			std = np.std(train_matrix[:, i])
+			norm_dict[i] = {"mean": mean, "std": std}
+
+		if std != 0:
+			train_matrix[:, i] = (train_matrix[:, i] - mean)/std
+			if valid_matrix is not None:
+				valid_matrix[:, i] = (valid_matrix[:, i] - mean)/std
+		else:
+			train_matrix[:, i] = 0.5
+			if valid_matrix is not None:
+				valid_matrix[:, i] = 0.5
+		
+	return train_matrix, valid_matrix, norm_dict
+
+def preprocess(train_samples, valid_samples = [], top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, savedir = None):
 	vectorizer = None
 	if type(words) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, words)
@@ -68,10 +99,32 @@ def preprocess(train_samples, valid_samples = [], top = 0, bottom = 0, use_all =
 		selected_words = [tup[0] for tup in selected_tuples]
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, selected_words)
 
+	if type(pca_n_attr) is int and type(lsa_n_attr) is int:
+		raise Exception("Cannot perform PCA and LSA at the same time")
+	
+	pca_components, norm_info = None, None
 	if type(pca_n_attr) is int:
-		pca = PCA(n_components = n_attribute)
+		pca = PCA(n_components = pca_n_attr)
 		train_matrix = pca.fit_transform(train_matrix)
 		valid_matrix = pca.transform(valid_matrix)
-		return train_matrix, valid_matrix, words, pca.components_
-	else:
-		return train_matrix, valid_matrix, words, None
+		pca_components = pca.components_
+
+	elif type(lsa_n_attr) is int:
+		lsa = TruncatedSVD(n_components = lsa_n_attr)
+		train_matrix = lsa.fit_transform(train_matrix)
+		valid_matrix = lsa.transform(valid_matrix)
+		pca_components = lsa.components_
+
+	train_matrix, valid_matrix, norm_info = normalize(train_matrix, valid_matrix)
+	if savedir is not None:
+		preprocess = {
+			"words": words, 
+			"pca": type(pca_n_attr) is int or type(lsa_n_attr) is int,
+			"norm_info": norm_info
+		}
+		with open(savedir+'/preprocess.json', "w") as f:
+			f.write(json.dumps(preprocess, indent = 4))
+		if savedir is not None:
+			np.save(savedir+"/pca.npy", pca_components)
+
+	return train_matrix, valid_matrix, words
