@@ -11,10 +11,11 @@ import tensorflow as tf
 _sample_folder = "./samples"
 _model_folder = "./models"
 _words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
-_model_type = "NN"
+_model_type = "SVM"
 _attributes = 50
+_normalize = False
 _strategy_parameters = {
-	"selection": "tfidf",
+	"selection": "idf",
 	"words": "samples",
 	"top": 0,
 	"bottom": 50
@@ -55,7 +56,7 @@ def main(run = 1, force_run = False):
 				if j != i:
 					train_samples.extend(batches[j])
 			savedir = "%s/%d/"%(_model_folder, i+1)
-			train_matrix, valid_matrix, words = preprocessing.preprocess(train_samples, valid_samples, savedir = savedir, **_strategy_parameters)
+			train_matrix, valid_matrix, words = preprocessing.preprocess(train_samples, valid_samples, normalize_flag = _normalize, savedir = savedir, **_strategy_parameters)
 			train_labels = np.asarray([get_label(sample) for sample in train_samples])
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
 			model, valid_mse = None, None

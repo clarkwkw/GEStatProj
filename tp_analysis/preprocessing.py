@@ -62,7 +62,7 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 		
 	return train_matrix, valid_matrix, norm_dict
 
-def preprocess(train_samples, valid_samples = [], top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, savedir = None):
+def preprocess(train_samples, valid_samples = [], normalize_flag = True, top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, savedir = None):
 	vectorizer = None
 	if type(words) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, words)
@@ -115,13 +115,15 @@ def preprocess(train_samples, valid_samples = [], top = 0, bottom = 0, use_all =
 		valid_matrix = lsa.transform(valid_matrix)
 		pca_components = lsa.components_
 
-	train_matrix, valid_matrix, norm_info = normalize(train_matrix, valid_matrix)
+	if normalize_flag:
+		train_matrix, valid_matrix, norm_info = normalize(train_matrix, valid_matrix)
 	if savedir is not None:
 		preprocess = {
 			"words": words, 
 			"pca": type(pca_n_attr) is int or type(lsa_n_attr) is int,
-			"norm_info": norm_info
 		}
+		if normalize_flag:
+			preprocess["norm_info"] = norm_info
 		with open(savedir+'/preprocess.json', "w") as f:
 			f.write(json.dumps(preprocess, indent = 4))
 		if savedir is not None:

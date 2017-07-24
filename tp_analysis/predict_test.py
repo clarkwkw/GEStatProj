@@ -20,7 +20,8 @@ model = None
 with open(_model+"/preprocess.json", "r") as f:
 	preprocess_dict = json.load(f)
 	_words = preprocess_dict["words"]
-	_norm_dict = preprocess_dict["norm_info"]
+	if "norm_info" in _norm_dict:
+		_norm_dict = preprocess_dict["norm_info"]
 	if preprocess_dict["pca"]:
 		pca_components = np.load(_model+'/pca.npy')
 
@@ -31,7 +32,8 @@ samples = sample.get_samples(_sample_folder)
 test_matrix, _, _ = preprocessing.preprocess(samples, words = _words)
 if pca_components is not None:
 	test_matrix = np.matmul(test_matrix, pca_components.T)
-test_matrix, _, _ = preprocessing.normalize(test_matrix, norm_info = _norm_dict)
+if _norm_dict is not None:
+	test_matrix, _, _ = preprocessing.normalize(test_matrix, norm_info = _norm_dict)
 if _type == "NN":
 	model = neural_network.Neural_Network.load(_model)
 else:
