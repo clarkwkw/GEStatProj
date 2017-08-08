@@ -37,7 +37,7 @@ if _norm_dict is not None:
 if _type == "NN":
 	model = neural_network.Neural_Network.load(_model)
 else:
-	model = svm.SVM.load(_model)
+	model = svm.SVR.load(_model)
 result = model.test(test_matrix)
 print([sample.understand for sample in samples])
 print(result)

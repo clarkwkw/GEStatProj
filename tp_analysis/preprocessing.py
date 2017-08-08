@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA
 import sample
 import textbook
 
@@ -62,18 +62,17 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 		
 	return train_matrix, valid_matrix, norm_dict
 
-def preprocess(train_samples, valid_samples = [], normalize_flag = True, top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, savedir = None):
-	vectorizer = None
+def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_rng = (1,1), top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, ipca_n_attr = None, savedir = None):
+	vectorizer, vect_texts = None, None
 	if type(words) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, words)
 	else:
 		if words == "textbook":
-			vect_texts =  ['\n'.join(textbook.getOrderedText())]
-			vectorizer = textbook.getTfidfVectorizer()
-			vectorizer.fit(vect_texts)
+			vect_texts = textbook.getOrderedText()
+			vectorizer = textbook.getTfidfVectorizer(ngram_rng)
 		elif words == "samples":
 			vect_texts = [sample.text for sample in train_samples]
-			vectorizer = TfidfVectorizer(stop_words = 'english')
+			vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
 			vectorizer.fit(vect_texts)
 		else:
 			raise Exception("Unexpected type for 'words'")
@@ -91,6 +90,11 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, top = 0
 				raise Exception("Unexpected selection type")
 			tuples.append((vocab, score, index))
 		tuples = sorted(tuples, key = lambda x: x[1], reverse = True)
+		
+		with open("test.txt", "w") as f:
+			for vocab, score, _ in tuples:
+				f.write("%s\t%s\n"%(vocab, score))
+		
 		selected_tuples = []
 		if use_all or top + bottom >= len(tuples):
 			selected_tuples = tuples
@@ -98,35 +102,37 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, top = 0
 			selected_tuples = tuples[0:top] + tuples[(len(tuples)-bottom):]
 		selected_words = [tup[0] for tup in selected_tuples]
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, selected_words)
-
-	if type(pca_n_attr) is int and type(lsa_n_attr) is int:
-		raise Exception("Cannot perform PCA and LSA at the same time")
 	
 	pca_components, norm_info = None, None
-	if type(pca_n_attr) is int:
-		pca = PCA(n_components = pca_n_attr)
-		train_matrix = pca.fit_transform(train_matrix)
-		valid_matrix = pca.transform(valid_matrix)
-		pca_components = pca.components_
-
-	elif type(lsa_n_attr) is int:
-		lsa = TruncatedSVD(n_components = lsa_n_attr)
-		train_matrix = lsa.fit_transform(train_matrix)
-		valid_matrix = lsa.transform(valid_matrix)
-		pca_components = lsa.components_
+	reduction_check = 0
+	reduction_check += type(pca_n_attr) is int
+	reduction_check += type(lsa_n_attr) is int
+	reduction_check += type(ipca_n_attr) is int
+	if reduction_check > 1:
+		raise Exception("Cannot perform multiple dimensionality reduction strategies at the same time")
+	elif reduction_check == 1:
+		reduction = None
+		if type(pca_n_attr) is int:
+			reduction = PCA(n_components = pca_n_attr)
+		elif type(lsa_n_attr) is int:
+			reduction = TruncatedSVD(n_components = lsa_n_attr)
+		else:
+			reduction = IncrementalPCA(n_components = ipca_n_attr)
+		train_matrix = reduction.fit_transform(train_matrix)
+		valid_matrix = reduction.transform(valid_matrix)
+		pca_components = reduction.components_
 
 	if normalize_flag:
 		train_matrix, valid_matrix, norm_info = normalize(train_matrix, valid_matrix)
 	if savedir is not None:
 		preprocess = {
 			"words": words, 
-			"pca": type(pca_n_attr) is int or type(lsa_n_attr) is int,
+			"pca": reduction_check > 0
 		}
 		if normalize_flag:
 			preprocess["norm_info"] = norm_info
 		with open(savedir+'/preprocess.json', "w") as f:
 			f.write(json.dumps(preprocess, indent = 4))
-		if savedir is not None:
-			np.save(savedir+"/pca.npy", pca_components)
+		np.save(savedir+"/pca.npy", pca_components)
 
 	return train_matrix, valid_matrix, words

@@ -66,8 +66,8 @@ def getOrderedText():
 def getChapterTitles():
 	return [chapter[0] for chapter in _chapter_pg]
 
-def getTfidfVectorizer():
-	vectorizer = TfidfVectorizer(stop_words = 'english')
+def getTfidfVectorizer(ngram_rng = (1, 1)):
+	vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
 	vectorizer.fit(getOrderedText())
 	#print("%d words are used."%len(vectorizer.vocabulary_.keys()))
 	return vectorizer

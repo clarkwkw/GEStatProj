@@ -1,3 +1,4 @@
+import filter
 import json
 import neural_network
 import svm
@@ -12,24 +13,32 @@ _sample_folder = "./samples"
 _model_folder = "./models"
 _words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
 _model_type = "SVM"
+
+# Preprocessing Parameters
 _attributes = 50
 _normalize = False
+_filter_samples = False
+_high_portion = 0.15
+_low_portion = 0.15
 _strategy_parameters = {
-	"selection": "idf",
+	"ngram_rng": (2, 3),
+	"selection": "tfidf",
 	"words": "samples",
-	"top": 0,
-	"bottom": 50
+	"use_all": True,
+	"ipca_n_attr": 50
+}
+_svm_parameters = {
 }
 
+# Neural Network Parameters
 learning_rate = 0.001
 training_epocs = 100000
 valid_step = 100
 hidden_nodes = [10]
 cross_valid = 5
-pca_components = None
 
 def get_label(sample):
-	return sample.understand
+	return sample.think + sample.understand + sample.lang + sample.pres
 
 def mkdir(dir):
 	try:
@@ -51,11 +60,16 @@ def main(run = 1, force_run = False):
 		for i in range(cross_valid):
 			valid_samples = batches[i]
 			train_samples = []
-			mkdir("%s/%d"%(_model_folder, i+1))
+
+			savedir = "%s/%d/"%(_model_folder, i+1)
+			mkdir(savedir)
+			
 			for j in range(cross_valid):
 				if j != i:
 					train_samples.extend(batches[j])
-			savedir = "%s/%d/"%(_model_folder, i+1)
+			
+			if _filter_samples:
+				train_samples = filter.score_portion(train_samples, get_label, _high_portion, _low_portion)
 			train_matrix, valid_matrix, words = preprocessing.preprocess(train_samples, valid_samples, normalize_flag = _normalize, savedir = savedir, **_strategy_parameters)
 			train_labels = np.asarray([get_label(sample) for sample in train_samples])
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
@@ -64,7 +78,7 @@ def main(run = 1, force_run = False):
 				model = neural_network.Neural_Network(_attributes, hidden_nodes, learning_rate)
 				valid_mse = model.train(train_matrix, train_labels, valid_matrix, valid_labels, max_iter = 15000)
 			else:
-				model = svm.SVM()
+				model = svm.SVR(**_svm_parameters)
 				valid_mse = model.train(train_matrix, train_labels, valid_matrix, valid_labels)
 			model.save(savedir)
 			model.destroy()
@@ -72,9 +86,11 @@ def main(run = 1, force_run = False):
 			print("Fold %2d: %.4f"%(i+1, valid_mse))
 
 if __name__ == "__main__":
-	#main(4, True)
+	main(4, True)
+	'''
 	while _strategy_parameters["bottom"] >= 0:
 		print("%s-%s: %d, %d"%(_strategy_parameters["words"], _strategy_parameters["selection"], _strategy_parameters["top"], _strategy_parameters["bottom"]))
 		main(4, True)
 		_strategy_parameters["top"] += 5
 		_strategy_parameters["bottom"] -= 5
+	'''
