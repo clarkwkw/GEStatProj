@@ -2,11 +2,10 @@ import re
 import os
 
 def parse_name(path):
-	name = path.split('/')
-	name = name[len(name) - 1].split('.')
-	name = '.'.join(name[0:(len(name)-1)])
+	name = os.path.basename(path)
+	name, _ = os.path.splitext(name)
 	name = name.split('-')
-	if len(name) != 7:
+	if len(name) != 7 and len(name) != 8:
 		raise Exception("Invalid sample file: "+path)
 	return name
 
@@ -15,8 +14,8 @@ def get_samples(sample_folder):
 		files = os.listdir(sample_folder)
 		samples = []
 		for file in files:
-			file_name = file.split('.')
-			if file_name[len(file_name) - 1] == 'txt':
+			_, ext = os.path.splitext(file)
+			if ext == '.txt':
 				samples.append(Sample(sample_folder + '/' + file))
 		return samples
 	except FileNotFoundError:
@@ -35,10 +34,15 @@ def partition(samples, folds = 10, index_only = False):
 		else:
 			yield samples[start:end]
 
-# [Type]-[Name]-[No]-[think]-[understand]-[language]-[presentation].txt
+# [Type]-[Name]-[No](-[Question No.])-[think]-[understand]-[language]-[presentation].txt
 class Sample:
 	def __init__(self, path):
-		[self.type, self.name, self.no, self.think, self.understand, self.lang, self.pres] = parse_name(path)
+		result = parse_name(path)
+		if len(result) == 7:
+			[self.type, self.name, self.no, self.think, self.understand, self.lang, self.pres] = result
+			self.question = None
+		else:
+			[self.type, self.name, self.no, self.question, self.think, self.understand, self.lang, self.pres] = result
 
 		self.think = float(self.think)
 		self.understand = float(self.understand)

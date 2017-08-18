@@ -41,7 +41,7 @@ class SVR:
 		model._trained = True
 		return model
 
-class SVM():
+class SVM:
 	def __init__(self, **kwargs):
 		self._trained = False
 		self._model = sk_svm.SVC(**kwargs)

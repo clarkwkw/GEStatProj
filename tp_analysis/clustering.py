@@ -1,0 +1,31 @@
+import sample
+import preprocessing
+import random
+import svm
+import numpy as np
+
+_sample_folder = "./samples"
+_name = "TP1"
+_train_ratio = 0.75
+_classes = ["Q1", "Q2", "Q3", "Q4"]
+
+samples = sample.get_samples(_sample_folder)
+samples = [s for s in samples if s.name == _name and s.question is not None]
+random.shuffle(samples)
+n_samples = len(samples)
+train_samples = samples[0:int(n_samples*_train_ratio)]
+test_samples = samples[int(n_samples*_train_ratio):n_samples]
+
+print("Samples distribution:", preprocessing.samples_statistics(samples, _classes))
+train_matrix, test_matrix, words = preprocessing.preprocess(train_samples, test_samples, use_all = True, words = "samples", selection = "idf", normalize_flag = False)
+
+train_labels = preprocessing.samples_to_label(train_samples, _classes)
+test_labels = preprocessing.samples_to_label(test_samples, _classes)
+
+model = svm.SVM()
+model.train(train_matrix, train_labels)
+predict = model.predict(test_matrix)
+
+accuracy = np.mean(predict == test_labels)
+
+print("accuracy %.3f"%accuracy)

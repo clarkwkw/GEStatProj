@@ -12,7 +12,8 @@ import tensorflow as tf
 _sample_folder = "./samples"
 _model_folder = "./models"
 _words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
-_model_type = "SVM"
+_model_type = "NN"
+_name_filter = "KK201617T1"
 
 # Preprocessing Parameters
 _attributes = 50
@@ -21,11 +22,11 @@ _filter_samples = False
 _high_portion = 0.15
 _low_portion = 0.15
 _strategy_parameters = {
-	"ngram_rng": (2, 3),
-	"selection": "tfidf",
-	"words": "samples",
+	"ngram_rng": (1, 1),
+	"selection": "idf",
+	"words": "textbook",
 	"use_all": True,
-	"ipca_n_attr": 50
+	"pca_n_attr": 50
 }
 _svm_parameters = {
 }
@@ -55,6 +56,9 @@ def main(run = 1, force_run = False):
 
 	for k in range(run):
 		samples = sample.get_samples(_sample_folder)
+		if _name_filter is not None:
+			samples = [s for s in samples if s.name == _name_filter]
+		#print(np.var([get_label(s) for s in samples]))
 		random.shuffle(samples)
 		batches = preprocessing.batch_data(samples, cross_valid)
 		for i in range(cross_valid):
@@ -75,7 +79,7 @@ def main(run = 1, force_run = False):
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
 			model, valid_mse = None, None
 			if _model_type == "NN":
-				model = neural_network.Neural_Network(_attributes, hidden_nodes, learning_rate)
+				model = neural_network.Neural_Network(_attributes, _hidden_nodes = hidden_nodes, _learning_rate = learning_rate)
 				valid_mse = model.train(train_matrix, train_labels, valid_matrix, valid_labels, max_iter = 15000)
 			else:
 				model = svm.SVR(**_svm_parameters)

@@ -11,8 +11,9 @@ def cal_mse(y, y_):
 		return np.mean(np.square(y - y_))
 
 class Neural_Network:
-	def __init__(self, _n_factors = None, _hidden_nodes = [], _learning_rate = 0.001, from_save = None):
+	def __init__(self, _n_factors = None, _hidden_nodes = [], _last_layer = 1, _learning_rate = 0.001, from_save = None):
 		self._hidden_nodes = _hidden_nodes
+		self._last_layer = _last_layer
 		self._weights = []
 		self._biases = []		
 		self._learning_rate = _learning_rate
@@ -26,7 +27,7 @@ class Neural_Network:
 				n_next_layer = 0
 				for i in range(0, len(_hidden_nodes) + 1):
 					if i >= len(_hidden_nodes):
-						n_next_layer = 1
+						n_next_layer = _last_layer
 					else:
 						n_next_layer = _hidden_nodes[i]
 					self._weights.append(tf.get_variable("w_"+str(i), initializer = tf.random_normal([n_last_layer, n_next_layer])))
@@ -104,7 +105,8 @@ class Neural_Network:
 		with open(savedir+"/model_conf.json", "w") as f:
 			init_para = {
 				"_n_factors": self._n_factors,
-				"_hidden_nodes": self._hidden_nodes
+				"_hidden_nodes": self._hidden_nodes,
+				"_last_layer": self._last_layer
 			}
 			f.write(json.dumps(init_para, indent = 4))
 

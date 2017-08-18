@@ -91,18 +91,16 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_r
 			tuples.append((vocab, score, index))
 		tuples = sorted(tuples, key = lambda x: x[1], reverse = True)
 		
-		with open("test.txt", "w") as f:
-			for vocab, score, _ in tuples:
-				f.write("%s\t%s\n"%(vocab, score))
-		
 		selected_tuples = []
 		if use_all or top + bottom >= len(tuples):
 			selected_tuples = tuples
-		else:
+		elif top+bottom > 0:
 			selected_tuples = tuples[0:top] + tuples[(len(tuples)-bottom):]
+		else:
+			raise Exception("Must specify a strategy to select words, by 'use_all, or 'top' or 'bottom'")
 		selected_words = [tup[0] for tup in selected_tuples]
 		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, selected_words)
-	
+		
 	pca_components, norm_info = None, None
 	reduction_check = 0
 	reduction_check += type(pca_n_attr) is int
@@ -136,3 +134,23 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_r
 		np.save(savedir+"/pca.npy", pca_components)
 
 	return train_matrix, valid_matrix, words
+
+def samples_to_dists(samples, classes):
+	class_to_index = {classes[i]: i for i in range(len(classes))}
+	dists = np.zeros((len(samples), len(classes)))
+	for i in range(len(samples)):
+		dists[i, class_to_index[samples[i].question]] = 1
+	return dists
+
+def samples_to_label(samples, classes):
+	class_to_index = {classes[i]: i for i in range(len(classes))}
+	dists = np.zeros(len(samples))
+	for i in range(len(samples)):
+		dists[i] = class_to_index[samples[i].question]
+	return dists
+
+def samples_statistics(samples, classes):
+	class_count = {classes[i]: 0 for i in range(len(classes))}
+	for sample in samples:
+		class_count[sample.question] += 1
+	return class_count
