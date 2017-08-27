@@ -8,7 +8,10 @@ _multi_thread = 8
 _forced_quit = False
 
 def cal_mse(y, y_):
-		return np.mean(np.square(y - y_))
+	return np.mean(np.square(y - y_))
+
+def cal_cross_entropy(predict, real):
+	return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=real, logits=predict))
 
 class Neural_Network:
 	def __init__(self, _n_factors = None, _hidden_nodes = [], _last_layer = 1, _learning_rate = 0.001, from_save = None):
@@ -35,10 +38,14 @@ class Neural_Network:
 					if i < len(_hidden_nodes):
 						n_last_layer = _hidden_nodes[i]
 				self._X = tf.placeholder(tf.float32, [None, _n_factors], name = "X")
-				self._y = tf.placeholder(tf.float32, [None], name = "y")
 				self._pred = self.__network(self._X)
 				tf.add_to_collection("pred", self._pred)
-				self._cost = tf.reduce_mean(tf.square(self._pred - self._y))
+				if _last_layer == 1:
+					self._y = tf.placeholder(tf.float32, [None], name = "y")
+					self._cost = tf.reduce_mean(tf.square(self._pred - self._y))
+				else:
+					self._y = tf.placeholder(tf.float32, [None, _last_layer], name = "y")
+					self._cost = cal_cross_entropy(self._pred, self._y)
 				self._optimizer = tf.train.AdamOptimizer(self._learning_rate).minimize(self._cost)
 				init = tf.global_variables_initializer()
 				self._sess.run(init)	
@@ -66,13 +73,19 @@ class Neural_Network:
 				_, train_cost = self._sess.run([self._optimizer, self._cost], feed_dict = {self._X: train_matrix, self._y: train_labels})
 				if adaptive and (i+1)%step == 0:
 					valid_predict = self._pred.eval(feed_dict = {self._X: valid_matrix}, session = self._sess)
-					valid_cost = cal_mse(valid_predict, valid_labels)
+					if self._last_layer == 1:
+						valid_cost = cal_mse(valid_predict, valid_labels)
+					else:
+						valid_cost = cal_cross_entropy(valid_predict, valid_labels).eval(session = self._sess)
 					#print("Epoch %5d: %.4f"%(i+1, valid_cost))
 					if decider.update(valid_cost) == False:
 						break
 			if adaptive:
 				valid_predict = self._pred.eval(feed_dict = {self._X: valid_matrix}, session = self._sess)
-				valid_cost = cal_mse(valid_predict, valid_labels)
+				if self._last_layer == 1:
+					valid_cost = cal_mse(valid_predict, valid_labels)
+				else:
+					valid_cost = cal_cross_entropy(valid_predict, valid_labels).eval(session = self._sess)
 
 		tf.reset_default_graph()
 		self._trained = True
@@ -85,7 +98,10 @@ class Neural_Network:
 		with self._graph.as_default() as g:
 			tmp_result = self._sess.run(self._pred, feed_dict = {self._X: matrix})
 		tf.reset_default_graph()
-		return [y[0] for y in tmp_result]
+		if self._last_layer == 1:
+			return [y[0] for y in tmp_result]
+		else:
+			return tmp_result
 
 	def __network(self, X):
 		tmp_result = X

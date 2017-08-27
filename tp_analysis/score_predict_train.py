@@ -90,7 +90,7 @@ def main(run = 1, force_run = False):
 			print("Fold %2d: %.4f"%(i+1, valid_mse))
 
 if __name__ == "__main__":
-	main(4, True)
+	main(1, False)
 	'''
 	while _strategy_parameters["bottom"] >= 0:
 		print("%s-%s: %d, %d"%(_strategy_parameters["words"], _strategy_parameters["selection"], _strategy_parameters["top"], _strategy_parameters["bottom"]))

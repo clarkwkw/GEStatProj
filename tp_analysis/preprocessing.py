@@ -142,6 +142,9 @@ def samples_to_dists(samples, classes):
 		dists[i, class_to_index[samples[i].question]] = 1
 	return dists
 
+def dists_to_labels(dists, classes):
+	return np.argmax(dists, axis = 1)
+
 def samples_to_label(samples, classes):
 	class_to_index = {classes[i]: i for i in range(len(classes))}
 	dists = np.zeros(len(samples))
