@@ -1,12 +1,10 @@
-import sample
 import preprocessing
 import random
-import svm
-import neural_network
+from models import SVM, Neural_Network
 import numpy as np
 
 _sample_folder = "./samples"
-_name = "TP1"
+_name = "KK201617T1"
 _train_ratio = 0.75
 _classes = ["Q1", "Q2", "Q3", "Q4"]
 # SVM / NN
@@ -16,7 +14,7 @@ _model = "SVM"
 _learning_rate = 1
 _hidden_nodes = []
 
-samples = sample.get_samples(_sample_folder)
+samples = preprocessing.get_samples(_sample_folder)
 samples = [s for s in samples if s.name == _name and s.question is not None]
 random.shuffle(samples)
 n_samples = len(samples)
@@ -31,14 +29,14 @@ train_matrix, test_matrix, words = preprocessing.preprocess(train_samples, test_
 if _model == "SVM":
 	train_labels = preprocessing.samples_to_label(train_samples, _classes)
 	test_labels = preprocessing.samples_to_label(test_samples, _classes)
-	model = svm.SVM()
+	model = SVM()
 	model.train(train_matrix, train_labels)
 	predict = model.predict(test_matrix)
 
 elif _model == "NN":
 	train_dists = preprocessing.samples_to_dists(train_samples, _classes)
 	test_dists = preprocessing.samples_to_dists(test_samples, _classes)
-	model = neural_network.Neural_Network(_n_factors = train_matrix.shape[1], _learning_rate = _learning_rate, _hidden_nodes = _hidden_nodes, _last_layer = len(_classes))
+	model = Neural_Network(_n_factors = train_matrix.shape[1], _learning_rate = _learning_rate, _hidden_nodes = _hidden_nodes, _last_layer = len(_classes))
 	model.train(train_matrix, train_dists, test_matrix, test_dists)
 	predict = model.test(test_matrix)
 	predict = preprocessing.dists_to_labels(predict, _classes)

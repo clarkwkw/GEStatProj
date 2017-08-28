@@ -2,7 +2,6 @@ import json
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA
-import sample
 import textbook
 
 def batch_data(series, batch_count):

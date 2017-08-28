@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import sample
+import preprocessing
 import textbook
 import nltk
 import pandas
@@ -29,15 +29,15 @@ def cal_similarity(v1, v2):
 	dot_product = np.dot(v1, v2)
 	return dot_product
 
-samples = sample.get_samples(sample_folder)
-similarity = np.zeros((len(samples), len(textbook.chapter_pg)))
+samples = preprocessing.get_samples(sample_folder)
+similarity = np.zeros((len(samples), len(textbook._chapter_pg)))
 key_vocabs_all = {}
 key_vocabs_chapters = []
 chapter_vects = []
 
 # Get important vocabs of each chapter
-for j in range(len(textbook.chapter_pg)):
-	ch = textbook.chapter_pg[j][0]
+for j in range(len(textbook._chapter_pg)):
+	ch = textbook._chapter_pg[j][0]
 	key_vocabs = []
 	chapter_vect = []
 	for (vocab, freq) in textbook.getTopVocabs(ch, n_key_vocabs):
@@ -57,7 +57,7 @@ for i in range(len(samples)):
 		word_count += 1
 		if token in sample_vocab_freq:
 			sample_vocab_freq[token] += 1
-	for j in range(len(textbook.chapter_pg)):
+	for j in range(len(textbook._chapter_pg)):
 		sample_vect = dict_to_arr(sample_vocab_freq, key_vocabs_chapters[j])
 		sample_vect = sample_vect/word_count
 		similarity[i, j] = np.sum(sample_vect)

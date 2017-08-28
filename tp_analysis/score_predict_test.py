@@ -9,7 +9,7 @@ import sample
 import tensorflow as tf
 
 _sample_folder = "./samples"
-_model = "./models/1"
+_model = "./output/1"
 _type = "NN"
 _words = []
 _norm_dict = None
@@ -38,6 +38,6 @@ if _type == "NN":
 	model = neural_network.Neural_Network.load(_model)
 else:
 	model = svm.SVR.load(_model)
-result = model.test(test_matrix)
+result = model.predict(test_matrix)
 print([sample.understand for sample in samples])
 print(result)

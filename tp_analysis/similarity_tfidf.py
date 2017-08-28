@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import sample
+import preprocessing
 import textbook
 import nltk
 import pandas
@@ -9,7 +9,7 @@ sample_folder = "./samples"
 out_file = "similarity.csv"
 n_key_vocabs = 30
 
-samples = sample.get_samples(sample_folder)
+samples = preprocessing.get_samples(sample_folder)
 samples_textbook = [sample.text for sample in samples]+textbook.getOrderedText()
 vectorizer = textbook.getTfidfVectorizer()
 tfidf = vectorizer.transform(samples_textbook)

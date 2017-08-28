@@ -92,7 +92,7 @@ class Neural_Network:
 		if adaptive:
 			return valid_cost
 
-	def test(self, matrix):
+	def predict(self, matrix):
 		if not self._trained:
 			raise Exception("Model not trained.")
 		with self._graph.as_default() as g:
