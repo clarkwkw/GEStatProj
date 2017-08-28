@@ -9,7 +9,7 @@ sample_folder = "./samples"
 out_file = "similarity.csv"
 n_key_vocabs = 30
 
-samples = preprocessing.get_samples(sample_folder)
+samples = preprocessing.tp_sample.get_samples(sample_folder)
 samples_textbook = [sample.text for sample in samples]+textbook.getOrderedText()
 vectorizer = textbook.getTfidfVectorizer()
 tfidf = vectorizer.transform(samples_textbook)

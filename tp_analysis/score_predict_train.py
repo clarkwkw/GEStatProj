@@ -51,7 +51,7 @@ def main(run = 1, force_run = False):
 			exit(-1)
 
 	for k in range(run):
-		samples = preprocessing.get_samples(_sample_folder)
+		samples = preprocessing.tp_sample.get_samples(_sample_folder)
 		if _name_filter is not None:
 			samples = [s for s in samples if s.name == _name_filter]
 		#print(np.var([get_label(s) for s in samples]))

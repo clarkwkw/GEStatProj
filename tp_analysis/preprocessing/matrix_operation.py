@@ -4,6 +4,18 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA
 import textbook
 
+def partition(samples, folds = 10, index_only = False):
+	if folds < 1 or folds > len(samples):
+		raise Exception("'folds' must be between 1 and len(sample)")
+	start, end = (0, 0)
+	for i in range(folds):
+		start = end
+		end += (len(samples) - end)//(folds - i)
+		if index_only:
+			yield (start, end)
+		else:
+			yield samples[start:end]
+
 def batch_data(series, batch_count):
 	length = len(series)
 	batch_size = length // batch_count
@@ -133,26 +145,3 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_r
 		np.save(savedir+"/pca.npy", pca_components)
 
 	return train_matrix, valid_matrix, words
-
-def samples_to_dists(samples, classes):
-	class_to_index = {classes[i]: i for i in range(len(classes))}
-	dists = np.zeros((len(samples), len(classes)))
-	for i in range(len(samples)):
-		dists[i, class_to_index[samples[i].question]] = 1
-	return dists
-
-def dists_to_labels(dists, classes):
-	return np.argmax(dists, axis = 1)
-
-def samples_to_label(samples, classes):
-	class_to_index = {classes[i]: i for i in range(len(classes))}
-	dists = np.zeros(len(samples))
-	for i in range(len(samples)):
-		dists[i] = class_to_index[samples[i].question]
-	return dists
-
-def samples_statistics(samples, classes):
-	class_count = {classes[i]: 0 for i in range(len(classes))}
-	for sample in samples:
-		class_count[sample.question] += 1
-	return class_count

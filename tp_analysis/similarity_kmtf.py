@@ -29,7 +29,7 @@ def cal_similarity(v1, v2):
 	dot_product = np.dot(v1, v2)
 	return dot_product
 
-samples = preprocessing.get_samples(sample_folder)
+samples = preprocessing.tp_sample.get_samples(sample_folder)
 similarity = np.zeros((len(samples), len(textbook._chapter_pg)))
 key_vocabs_all = {}
 key_vocabs_chapters = []
