@@ -78,7 +78,7 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 #
 # Other parameters:
 #	save_dir: string/ None, save preprocessing settings to the specified directory if not None
-def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng = (1,1), words_src = [], selection = "tf", select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
+def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng = (1,1), words_src = [], selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
 	vectorizer, vect_texts = None, None
 	if type(words_src) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, words_src)
@@ -91,7 +91,7 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng =
 			vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
 			vectorizer.fit(train_texts)
 		else:
-			raise Exception("Unexpected type for 'words'")
+			raise Exception("Unexpected value for 'words_src'")
 
 		if selection == "tfidf":
 			tfidf_matrix = vectorizer.transform(vect_texts).toarray()[0]
@@ -103,10 +103,11 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng =
 			elif selection == "tfidf":
 				score = tfidf_matrix[index]
 			elif selection is None:
-				score = 1
+				score = vectorizer.idf_[index]
 			else:
 				raise Exception("Unexpected selection type")
 			tuples.append((vocab, score, index))
+			
 		
 		selected_tuples = []
 		if selection is None or select_top + select_bottom >= len(tuples):

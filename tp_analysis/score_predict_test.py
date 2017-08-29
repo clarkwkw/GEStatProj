@@ -24,7 +24,7 @@ with open(_model+"/preprocess.json", "r") as f:
 		pca_components = np.load(_model+'/pca.npy')
 
 def get_label(sample):
-	return sample.understand
+	return sample.think + sample.understand + sample.lang + sample.pres
 
 samples = preprocessing.tp_sample.get_samples(_sample_folder)
 texts = [sample.text for sample in samples]
@@ -38,5 +38,5 @@ if _type == "NN":
 else:
 	model = models.SVR.load(_model)
 result = model.predict(test_matrix)
-print([sample.understand for sample in samples])
+print([get_label(sample) for sample in samples])
 print(result)

@@ -4,9 +4,10 @@ from models import SVM, Neural_Network
 import numpy as np
 
 _sample_folder = "./samples"
-_batch_name = "KK201617T1"
+_batch_name = "TP1"
 _train_ratio = 0.75
 _classes = ["Q1", "Q2", "Q3", "Q4"]
+
 # SVM / NN
 _model = "SVM"
 
@@ -24,11 +25,15 @@ test_samples = samples[int(n_samples*_train_ratio):n_samples]
 print("Samples distribution:", preprocessing.samples_statistics(samples, _classes))
 print("Train set distribution:", preprocessing.samples_statistics(train_samples, _classes))
 print("Test set distribution:", preprocessing.samples_statistics(test_samples, _classes))
-train_matrix, test_matrix, words = preprocessing.preprocess(train_samples, test_samples, use_all = True, words = "samples", selection = "idf", normalize_flag = False)
+
+train_texts = [sample.text for sample in train_samples]
+test_texts = [sample.text for sample in test_samples]
+train_matrix, test_matrix, words = preprocessing.preprocess(train_texts, test_texts, words_src = "samples", normalize_flag = False)
 
 if _model == "SVM":
 	train_labels = preprocessing.samples_to_label(train_samples, _classes)
 	test_labels = preprocessing.samples_to_label(test_samples, _classes)
+
 	model = SVM()
 	model.train(train_matrix, train_labels)
 	predict = model.predict(test_matrix)

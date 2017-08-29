@@ -13,7 +13,6 @@ _name_filter = None
 
 # Preprocessing Parameters
 _attributes = 50
-_normalize = False
 _filter_samples = False
 _high_portion = 0.15
 _low_portion = 0.15
@@ -24,7 +23,8 @@ _strategy_parameters = {
 	"select_bottom": 0,
 	"words_src": "textbook",
 	"reduction": "lsa",
-	"reduce_n_attr": 50
+	"reduce_n_attr": 50,
+	"normalize_flag": True
 }
 _svm_parameters = {
 }
@@ -75,7 +75,7 @@ def main(run = 1, force_run = False):
 				train_samples = preprocessing.score_portion(train_samples, get_label, _high_portion, _low_portion)
 			train_texts = [sample.text for sample in train_samples]
 			valid_texts = [sample.text for sample in valid_samples]
-			train_matrix, valid_matrix, words = preprocessing.preprocess(train_texts, valid_texts, normalize_flag = _normalize, savedir = savedir, **_strategy_parameters)
+			train_matrix, valid_matrix, words = preprocessing.preprocess(train_texts, valid_texts, savedir = savedir, **_strategy_parameters)
 			train_labels = np.asarray([get_label(sample) for sample in train_samples])
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
 			model, valid_mse = None, None
