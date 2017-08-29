@@ -4,7 +4,7 @@ from models import SVM, Neural_Network
 import numpy as np
 
 _sample_folder = "./samples"
-_name = "KK201617T1"
+_batch_name = "KK201617T1"
 _train_ratio = 0.75
 _classes = ["Q1", "Q2", "Q3", "Q4"]
 # SVM / NN
@@ -15,7 +15,7 @@ _learning_rate = 1
 _hidden_nodes = []
 
 samples = preprocessing.tp_sample.get_samples(_sample_folder)
-samples = [s for s in samples if s.name == _name and s.question is not None]
+samples = [s for s in samples if s.batch_name == _batch_name and s.question is not None]
 random.shuffle(samples)
 n_samples = len(samples)
 train_samples = samples[0:int(n_samples*_train_ratio)]

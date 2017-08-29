@@ -51,6 +51,7 @@ def init():
 			pg = pdfReader.getPage(i).extractText()
 			chapter_text.append(pg)
 		chapter_text = ' '.join(chapter_text)
+		chapter_text = chapter_text.encode("ascii", "ignore")
 		_chap_texts[ch[0]] = chapter_text
 	_is_init = True
 

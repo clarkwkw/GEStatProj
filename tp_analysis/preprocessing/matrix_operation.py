@@ -4,18 +4,6 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA
 import textbook
 
-def partition(samples, folds = 10, index_only = False):
-	if folds < 1 or folds > len(samples):
-		raise Exception("'folds' must be between 1 and len(sample)")
-	start, end = (0, 0)
-	for i in range(folds):
-		start = end
-		end += (len(samples) - end)//(folds - i)
-		if index_only:
-			yield (start, end)
-		else:
-			yield samples[start:end]
-
 def batch_data(series, batch_count):
 	length = len(series)
 	batch_size = length // batch_count
@@ -29,7 +17,7 @@ def batch_data(series, batch_count):
 		start = end
 	return arr
 
-def by_predefined_words(train_samples, valid_samples = [], words = None):
+def by_predefined_words(train_texts, valid_texts = [], words = None):
 	vocabs = {}
 	if words is None:
 		words = textbook.getTopVocabs("all", 30)
@@ -38,8 +26,6 @@ def by_predefined_words(train_samples, valid_samples = [], words = None):
 		vocabs[words[i]] = i
 	vectorizer = CountVectorizer(vocabulary = vocabs)
 
-	train_texts = [sample.text for sample in train_samples]
-	valid_texts = [sample.text for sample in valid_samples]
 	train_matrix = vectorizer.transform(train_texts).todense()
 	valid_matrix = vectorizer.transform(valid_texts).todense()
 	return (train_matrix, valid_matrix, words)
@@ -73,18 +59,37 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 		
 	return train_matrix, valid_matrix, norm_dict
 
-def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_rng = (1,1), top = 0, bottom = 0, use_all = False,  selection = "tf", words = [], pca_n_attr = None, lsa_n_attr = None, ipca_n_attr = None, savedir = None):
+# Perform 3 steps to generate training/ validating texts:
+# 1. Construct the bag of words
+#		Parameters:
+#			ngram_rng: tuple, the lower and uppper bound of the length of a ngram
+#			words_src: "textbook"/"samples" / list of strings, the source to consider
+#			selection: None/ "tfidf"/ "idf", strategy to select the bag of words
+#			select_top, select_bottom: integer, no. of words to select according the top/ bottom values of selection strategy
+#	
+# 2. Dimensionality reduction
+#		Parameters:
+#			reduction: None/ "pca"/ "lsa"/ "ipca", strategy for dimensionality reduction
+#			reduce_n_attr: integer, desired no. of dimensions after reduction	
+#
+# 3. Normalization
+#		Parameters:
+#			normalize_flag: boolean, if set to true, columns will be normalized to 0 mean and variance 1
+#
+# Other parameters:
+#	save_dir: string/ None, save preprocessing settings to the specified directory if not None
+def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng = (1,1), words_src = [], selection = "tf", select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
 	vectorizer, vect_texts = None, None
-	if type(words) is list:
-		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, words)
+	if type(words_src) is list:
+		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, words_src)
 	else:
-		if words == "textbook":
+		if words_src == "textbook":
 			vect_texts = textbook.getOrderedText()
 			vectorizer = textbook.getTfidfVectorizer(ngram_rng)
-		elif words == "samples":
-			vect_texts = [sample.text for sample in train_samples]
+		elif words_src == "samples":
+			vect_texts = train_texts
 			vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
-			vectorizer.fit(vect_texts)
+			vectorizer.fit(train_texts)
 		else:
 			raise Exception("Unexpected type for 'words'")
 
@@ -97,51 +102,53 @@ def preprocess(train_samples, valid_samples = [], normalize_flag = True, ngram_r
 				score = vectorizer.idf_[index]
 			elif selection == "tfidf":
 				score = tfidf_matrix[index]
+			elif selection is None:
+				score = 1
 			else:
 				raise Exception("Unexpected selection type")
 			tuples.append((vocab, score, index))
-		tuples = sorted(tuples, key = lambda x: x[1], reverse = True)
 		
 		selected_tuples = []
-		if use_all or top + bottom >= len(tuples):
+		if selection is None or select_top + select_bottom >= len(tuples):
 			selected_tuples = tuples
-		elif top+bottom > 0:
-			selected_tuples = tuples[0:top] + tuples[(len(tuples)-bottom):]
+		elif select_top + select_bottom > 0:
+			tuples = sorted(tuples, key = lambda x: x[1], reverse = True)
+			selected_tuples = tuples[0:select_top] + tuples[(len(tuples)-select_bottom):]
 		else:
-			raise Exception("Must specify a strategy to select words, by 'use_all, or 'top' or 'bottom'")
+			raise Exception("Must specify 'select_top'/'select_bottom' when 'selection' is not None")
+
 		selected_words = [tup[0] for tup in selected_tuples]
-		train_matrix, valid_matrix, words = by_predefined_words(train_samples, valid_samples, selected_words)
+		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, selected_words)
 		
 	pca_components, norm_info = None, None
-	reduction_check = 0
-	reduction_check += type(pca_n_attr) is int
-	reduction_check += type(lsa_n_attr) is int
-	reduction_check += type(ipca_n_attr) is int
-	if reduction_check > 1:
-		raise Exception("Cannot perform multiple dimensionality reduction strategies at the same time")
-	elif reduction_check == 1:
-		reduction = None
-		if type(pca_n_attr) is int:
-			reduction = PCA(n_components = pca_n_attr)
-		elif type(lsa_n_attr) is int:
-			reduction = TruncatedSVD(n_components = lsa_n_attr)
+	reductor = None
+	if reduction is not None:
+		if reduction == "pca":
+			reductor = PCA(n_components = reduce_n_attr)
+		elif reduction == "lsa":
+			reductor = TruncatedSVD(n_components = reduce_n_attr)
+		elif reduction == "ipca":
+			reductor = IncrementalPCA(n_components = reduce_n_attr)
 		else:
-			reduction = IncrementalPCA(n_components = ipca_n_attr)
-		train_matrix = reduction.fit_transform(train_matrix)
-		valid_matrix = reduction.transform(valid_matrix)
-		pca_components = reduction.components_
+			raise Exception("Unexpected reduction strategy '%s'"%reduction)
+
+		train_matrix = reductor.fit_transform(train_matrix)
+		valid_matrix = reductor.transform(valid_matrix)
+		pca_components = reductor.components_
 
 	if normalize_flag:
 		train_matrix, valid_matrix, norm_info = normalize(train_matrix, valid_matrix)
+
 	if savedir is not None:
 		preprocess = {
 			"words": words, 
-			"pca": reduction_check > 0
+			"pca": reduction is not None
 		}
 		if normalize_flag:
 			preprocess["norm_info"] = norm_info
 		with open(savedir+'/preprocess.json', "w") as f:
 			f.write(json.dumps(preprocess, indent = 4))
-		np.save(savedir+"/pca.npy", pca_components)
+		if reduction is not None:
+			np.save(savedir+"/pca.npy", pca_components)
 
 	return train_matrix, valid_matrix, words

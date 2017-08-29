@@ -8,7 +8,7 @@ import tensorflow as tf
 
 _sample_folder = "./samples"
 _model = "./output/1"
-_type = "NN"
+_type = "SVM"
 _words = []
 _norm_dict = None
 pca_components = None
@@ -27,7 +27,8 @@ def get_label(sample):
 	return sample.understand
 
 samples = preprocessing.tp_sample.get_samples(_sample_folder)
-test_matrix, _, _ = preprocessing.preprocess(samples, words = _words)
+texts = [sample.text for sample in samples]
+test_matrix, _, _ = preprocessing.preprocess(texts, words_src = _words)
 if pca_components is not None:
 	test_matrix = np.matmul(test_matrix, pca_components.T)
 if _norm_dict is not None:

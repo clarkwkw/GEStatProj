@@ -8,8 +8,8 @@ import random
 _sample_folder = "./samples"
 _model_folder = "./output"
 _words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
-_model_type = "NN"
-_name_filter = "KK201617T1"
+_model_type = "SVM"
+_name_filter = None
 
 # Preprocessing Parameters
 _attributes = 50
@@ -19,10 +19,12 @@ _high_portion = 0.15
 _low_portion = 0.15
 _strategy_parameters = {
 	"ngram_rng": (1, 1),
-	"selection": "idf",
-	"words": "textbook",
-	"use_all": True,
-	"pca_n_attr": 50
+	"selection": 'tfidf',
+	"select_top": 1000,
+	"select_bottom": 0,
+	"words_src": "textbook",
+	"reduction": "lsa",
+	"reduce_n_attr": 50
 }
 _svm_parameters = {
 }
@@ -45,6 +47,7 @@ def mkdir(dir):
 
 
 def main(run = 1, force_run = False):
+	mkdir(_model_folder)
 	if not force_run and len(os.listdir(_model_folder)) > 0:
 		ans = input("Found something in '%s', which may be overwitten.\nProceed? [y/n]: "%_model_folder)
 		if ans.lower() == 'n':
@@ -53,7 +56,7 @@ def main(run = 1, force_run = False):
 	for k in range(run):
 		samples = preprocessing.tp_sample.get_samples(_sample_folder)
 		if _name_filter is not None:
-			samples = [s for s in samples if s.name == _name_filter]
+			samples = [s for s in samples if s.batch_name == _name_filter]
 		#print(np.var([get_label(s) for s in samples]))
 		random.shuffle(samples)
 		batches = preprocessing.batch_data(samples, cross_valid)
@@ -70,7 +73,9 @@ def main(run = 1, force_run = False):
 			
 			if _filter_samples:
 				train_samples = preprocessing.score_portion(train_samples, get_label, _high_portion, _low_portion)
-			train_matrix, valid_matrix, words = preprocessing.preprocess(train_samples, valid_samples, normalize_flag = _normalize, savedir = savedir, **_strategy_parameters)
+			train_texts = [sample.text for sample in train_samples]
+			valid_texts = [sample.text for sample in valid_samples]
+			train_matrix, valid_matrix, words = preprocessing.preprocess(train_texts, valid_texts, normalize_flag = _normalize, savedir = savedir, **_strategy_parameters)
 			train_labels = np.asarray([get_label(sample) for sample in train_samples])
 			valid_labels = np.asarray([get_label(sample) for sample in valid_samples])
 			model, valid_mse = None, None
