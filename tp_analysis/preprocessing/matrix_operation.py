@@ -78,7 +78,7 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 #
 # Other parameters:
 #	save_dir: string/ None, save preprocessing settings to the specified directory if not None
-def preprocess(train_texts, valid_texts = [], normalize_flag = True, ngram_rng = (1,1), words_src = [], selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
+def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng = (1,1), words_src = None, selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
 	vectorizer, vect_texts = None, None
 	if type(words_src) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, words_src)
