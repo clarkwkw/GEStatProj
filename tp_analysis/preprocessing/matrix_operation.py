@@ -64,6 +64,7 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 #		Parameters:
 #			ngram_rng: tuple, the lower and uppper bound of the length of a ngram
 #			words_src: "textbook"/"samples" / list of strings, the source to consider
+#			tb_chs: list of textbook chapters/ None, when words_src = "textbook", the chapters of textbook to consider
 #			selection: None/ "tfidf"/ "idf", strategy to select the bag of words
 #			select_top, select_bottom: integer, no. of words to select according the top/ bottom values of selection strategy
 #	
@@ -78,14 +79,14 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 #
 # Other parameters:
 #	save_dir: string/ None, save preprocessing settings to the specified directory if not None
-def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng = (1,1), words_src = None, selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
+def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng = (1,1), words_src = None, tb_chs = None, selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
 	vectorizer, vect_texts = None, None
 	if type(words_src) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, words_src)
 	else:
 		if words_src == "textbook":
-			vect_texts = textbook.getOrderedText()
-			vectorizer = textbook.getTfidfVectorizer(ngram_rng)
+			vect_texts = textbook.getOrderedText(chs = tb_chs)
+			vectorizer = textbook.getTfidfVectorizer(ngram_rng, chs = tb_chs)
 		elif words_src == "samples":
 			vect_texts = train_texts
 			vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')

@@ -7,9 +7,8 @@ import random
 
 _sample_folder = "./samples"
 _model_folder = "./output"
-_words = ["nature", "science", "motion", "equal", "angle", "text", "time", "dialogue", "dna", "species", "new", "did", "straight", "point", "line", "force", "chinese", "aristotle", "life", "natural", "way", "world", "let", "modern", "angles", "change", "body", "greater", "china", "like", "given", "mathematical", "work", "things", "form", "selection", "thought", "great", "ab", "does", "place", "different", "called", "lines", "earth", "long", "fact", "make", "revolution", "triangle"]
 _model_type = "SVM"
-_name_filter = None
+_name_filter = ["KK201617T1", "KK201617T2"]
 
 # Preprocessing Parameters
 _attributes = 50
@@ -22,9 +21,10 @@ _strategy_parameters = {
 	"select_top": 1000,
 	"select_bottom": 0,
 	"words_src": "textbook",
+	"tb_chs": ["1a", "1b", "2", "3a", "3b", "4", "5", "6", "7", "8", "9", "10a", "10b", "11a"],
 	"reduction": "lsa",
 	"reduce_n_attr": 50,
-	"normalize_flag": True
+	"normalize_flag": False
 }
 _svm_parameters = {
 }
@@ -56,7 +56,7 @@ def main(run = 1, force_run = False):
 	for k in range(run):
 		samples = preprocessing.tp_sample.get_samples(_sample_folder)
 		if _name_filter is not None:
-			samples = [s for s in samples if s.batch_name == _name_filter]
+			samples = [s for s in samples if s.batch_name in _name_filter]
 		#print(np.var([get_label(s) for s in samples]))
 		random.shuffle(samples)
 		batches = preprocessing.batch_data(samples, cross_valid)

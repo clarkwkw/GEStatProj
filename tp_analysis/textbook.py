@@ -55,21 +55,25 @@ def init():
 		_chap_texts[ch[0]] = chapter_text
 	_is_init = True
 
-def getOrderedText():
+def getOrderedText(chs = None):
 	if not _is_init:
 		init()
 
 	texts = []
-	for [ch, _, _] in _chapter_pg:
-		texts.append(_chap_texts[ch])
+	if chs is None:
+		for [ch, _, _] in _chapter_pg:
+			texts.append(_chap_texts[ch])
+	else:
+		for ch in chs:
+			texts.append(_chap_texts[ch])
 	return texts
 
 def getChapterTitles():
 	return [chapter[0] for chapter in _chapter_pg]
 
-def getTfidfVectorizer(ngram_rng = (1, 1)):
+def getTfidfVectorizer(ngram_rng = (1, 1), chs = None):
 	vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
-	vectorizer.fit(getOrderedText())
+	vectorizer.fit(getOrderedText(chs))
 	#print("%d words are used."%len(vectorizer.vocabulary_.keys()))
 	return vectorizer
 
