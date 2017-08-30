@@ -5,6 +5,8 @@ import os, errno
 
 def simple_check(response):
 	json_response = json.loads(response.body_as_unicode())
+	if response.status == 429:
+		raise Exception("API rate limit exceeded")
 	if 'response' not in json_response or json_response['response']['status'] != 'ok':
 		raise Exception("malformed response: %s"%json_response)
 	return json_response['response']

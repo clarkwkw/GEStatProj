@@ -10,7 +10,7 @@ _query_conds = "?show-fields=headline,body,wordcount&shouldHideAdverts=true"
 
 class GetTextsSpider(scrapy.Spider):
 	name = "get_texts"
-	handle_httpstatus_list = [500, 403]
+	handle_httpstatus_list = [500, 403, 429]
 	custom_settings = {
 		'ITEM_PIPELINES': {
 			'guardian.pipelines.TextsPipeline': 300
@@ -59,7 +59,7 @@ class GetTextsSpider(scrapy.Spider):
 		try:
 			json_response = utils.simple_check(response)
 		except Exception as e:
-			logging.error("request_failed")
+			logging.error("request_failed: %s"%e.message)
 			raise scrapy.exceptions.CloseSpider("request_failed: %s"%e.message)
 		result = {}
 		result["gid"] = json_response["content"]["id"]

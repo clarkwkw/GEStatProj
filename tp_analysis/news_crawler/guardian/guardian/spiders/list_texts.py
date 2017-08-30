@@ -11,7 +11,7 @@ _page_size = 50
 
 class ListTextsSpider(scrapy.Spider):
 	name = "list_texts"
-	handle_httpstatus_list = [500, 403]
+	handle_httpstatus_list = [500, 403, 429]
 	custom_settings = {
 		'ITEM_PIPELINES': {
 			'guardian.pipelines.TextListPipeline': 300
