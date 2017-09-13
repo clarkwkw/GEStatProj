@@ -77,7 +77,7 @@ def getTfidfVectorizer(ngram_rng = (1, 1), chs = None):
 	#print("%d words are used."%len(vectorizer.vocabulary_.keys()))
 	return vectorizer
 
-def getTopVocabs(ch, n = 30):
+def getTopVocabs(ch, n = 30, ngram_rng = (1, 1)):
 	if not _is_init:
 		init()
 	if ch == 'all':
@@ -88,7 +88,7 @@ def getTopVocabs(ch, n = 30):
 	else:
 		text = _chap_texts[ch]
 
-	vectorizer = CountVectorizer(stop_words = 'english')
+	vectorizer = CountVectorizer(stop_words = 'english', ngram_range = ngram_rng)
 	freq = vectorizer.fit_transform([text]).toarray()[0]
 	word_index_table = vectorizer.vocabulary_
 	word_freq_pair = []

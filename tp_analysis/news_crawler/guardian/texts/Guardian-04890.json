@@ -1,0 +1,20 @@
+{
+    "headline": "'Dirty Cow' Linux vulnerability found after nine years", 
+    "text": "The operating system that lies at the core of most servers on the internet and most smartphones has a critical vulnerability which has existed, unnoticed, for nine years. 
+Called Dirty Cow (because it exploits a mechanism called copy-on-write), the bug allows an attacker to gain privilege escalation on the Linux kernel. 
+ 
+ What is Linux? 
+ 
+Linux, a free open-source operating system, is at the heart of a huge number of applications, but its most well-known uses are in webservers (under brand names such as Red Hat, Ubuntu and Debian) and as the core of Android, Googles operating system for smartphones. 
+Because its open-source, anyone can see, re-use, and suggest edits to the core source code, which is usually thought to increase the security of the operating system: many eyes means a higher chance of someone spotting, and fixing, bugs. 
+But the Dirty Cow bug  officially called CVE20165195  was originally introduced to the kernel nine years ago, and has been sitting unnoticed for much of that time. In fact, research published this week claimed that the typical Linux bug reaches about five years old before it is fixed. 
+Dirty Cow is a class of vulnerability known as a privilege escalation bug, which means that it allows an attacker which has already gained some measure of control over a specific computer to leverage that into total control. 
+According to Phil Oester, the researcher who found the bug, an exploit taking advantage of Dirty Cow has already been found in the wild. 
+But the research team warn that while Dirty Cow is serious, it shouldnt distract from the more workaday bugs, which are found regularly. All the boring normal bugs are way more important, just because theres a lot more of them. I dont think some spectacular security hole should be glorified or cared about as being any more special than a random spectacular crash due to bad locking. The major issue with the bug isnt its danger, but its age: it is easy to exploit reliably, and thanks to the nine years its been hiding in the code, it will be in millions of computers. 
+The bug is already patched on some of the major versions of Linux, including Red Hat, Debian and Ubuntu. But for millions of other devices that run Linux, particularly embedded versions of the operating system, the patch will be difficult to apply, and potentially nonexistent. 
+That also applies to Android: the mobile operating system is affected. While top-end Android devices, such as the Galaxy S7 and Pixel, receive regular security updates, the vast majority of Android devices sold receive few, if any, post-sale updates.  
+Google declined to comment, but confirmed that Android is one of the Linux distributions affected. The company has posted a Partner Security Advisory to alert Android partners, one of the steps to those partners then issuing a patch", 
+    "section": "technology", 
+    "gid": "technology/2016/oct/21/dirty-cow-linux-vulnerability-found-after-nine-years", 
+    "wordcount": "480"
+}

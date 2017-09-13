@@ -5,15 +5,19 @@ import json
 def get_samples(sample_folder):
 	try:
 		files = os.listdir(sample_folder)
-		samples = []
-		for file in files:
-			_, ext = os.path.splitext(file)
-			if ext == '.json':
-				samples.append(TPSample(sample_folder + '/' + file))
-		return samples
 	except FileNotFoundError:
 		print("Folder '%s' does not exist, abort."%sample_folder)
 		exit(-1)
+	samples = []
+	for file in files:
+		_, ext = os.path.splitext(file)
+		name = os.path.basename(file)
+		if ext == '.json':
+			try:
+				samples.append(TPSample(sample_folder + '/' + file))
+			except:
+				print("Cannot read news sample %s"%name)
+	return samples
 
 class TPSample:
 	def __init__(self, path):

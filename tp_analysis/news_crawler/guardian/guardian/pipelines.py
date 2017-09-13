@@ -23,7 +23,7 @@ class TextsPipeline(object):
 		spider.save_master_record()
 
 	def process_item(self, item, spider):
-		f_name = "{output_dir:s}/{prefix:s}-{number:0{width}d}".format(output_dir = spider.output_dir, prefix = spider.text_name_prefix, number = spider.last_unallocated_number, width = spider.text_name_length)
+		f_name = "{output_dir:s}/{prefix:s}-{number:0{width}d}.json".format(output_dir = spider.output_dir, prefix = spider.text_name_prefix, number = spider.last_unallocated_number, width = spider.text_name_length)
 		with open(f_name, "w") as f:
 			text = json.dumps(item, indent = 4)
 			text = text.decode('unicode_escape').encode('ascii','ignore')
