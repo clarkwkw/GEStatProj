@@ -1,7 +1,0 @@
-{
-    "headline": "Apple offers iOS 6.1.1 fix for iPhone 4S users' 3G connections", 
-    "text": "Apple has released iOS 6.1.1, a &quot;bug-fix&quot; version to sort out problems that had led a number of European phone operators including Vodafone to warn customers using the iPhone 4S not to update to its predecessor, iOS 6.1. That had been released two weeks before. The new release, which should be available through phones or can be downloaded directly from Apple (968MB), is only available for iPhone 4S users.  In a terse note about the update, Apple says that &quot;This update fixes an issue that could impact cellular performance and reliability for iPhone 4S.&quot; Carriers had begun warning customers last week not to update to iOS 6.1 if they hadn&apos;t already done so; it said that 3G connectivity could be affected. The new software is meant to fix that. However other users with iPhone 5s have complained of excessive battery drain on iOS 6; Apple has not indicated whether it recognises a problem there.  However Apple has apparently not fixed problems reported with all models of iPhones running iOS 6 - released in September - when connecting to Microsoft Exchange servers. That has led some corporate users to block certain functionality relating to meeting invitations. Apple has not responded to requests to clarify its timescale for fixing the problems with Exchange accounts.", 
-    "section": "technology", 
-    "gid": "technology/blog/2013/feb/11/apple-ios6-fix-iphone-4s-users", 
-    "wordcount": "220"
-}

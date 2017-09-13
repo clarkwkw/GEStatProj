@@ -4,3 +4,4 @@
 top30.txt
 *.csv
 /output
+/news_crawler/guardian/texts
