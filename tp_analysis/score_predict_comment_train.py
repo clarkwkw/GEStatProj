@@ -44,7 +44,7 @@ def main(run = 1, force_run = False):
 		samples = preprocessing.tp_sample.get_samples(_sample_folder)
 		if _name_filter is not None:
 			samples = [s for s in samples if s.batch_name in _name_filter]
-		print("Varaince: %.3f"%np.var([get_label(s) for s in samples]))
+		print("Variance: %.3f"%np.var([get_label(s) for s in samples]))
 		random.shuffle(samples)
 		batches = preprocessing.batch_data(samples, _cross_valid)
 		for i in range(_cross_valid):
