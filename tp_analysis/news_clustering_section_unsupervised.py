@@ -1,6 +1,6 @@
 import preprocessing
 import random
-from models import SVM, Neural_Network
+from sklearn.cluster import KMeans
 import numpy as np
 
 _news_dir = "./news_crawler/guardian/texts"
@@ -8,6 +8,9 @@ _model = "SVM"
 _min_word_count = 400
 _train_ratio = 0.8
 _max_thread = 4
+_reduction = "ipca"
+_reduce_n_attr = 1000
+
 _section_filter = ["education", "science", "technology", "higher-education-network", "environment", "global-development"]
 
 def get_section(sample):
@@ -30,31 +33,28 @@ print("Test set distribution:", preprocessing.samples_statistics(test_samples, _
 
 train_texts = [sample.text for sample in train_samples]
 test_texts = [sample.text for sample in test_samples]
-train_matrix, test_matrix, words = preprocessing.preprocess(train_texts, test_texts, words_src = "samples", normalize_flag = False)
+train_matrix, test_matrix, words = preprocessing.preprocess(train_texts, test_texts, words_src = "samples", normalize_flag = False, reduction = _reduction, reduce_n_attr = _reduce_n_attr)
 
 print("Generating labels..")
-if _model == "SVM":
-	train_labels = preprocessing.samples_to_label(train_samples, _section_filter, get_section)
-	test_labels = preprocessing.samples_to_label(test_samples, _section_filter, get_section)
+train_labels = preprocessing.samples_to_label(train_samples, _section_filter, get_section)
+test_labels = preprocessing.samples_to_label(test_samples, _section_filter, get_section)
 
-	model = SVM()
-	print("Training.. ")
-	model.train(train_matrix, train_labels)
-	predict = model.predict(test_matrix)
+print("Training..")
+kmeans = KMeans(n_clusters = len(_section_filter))
+reference_output = kmeans.fit_predict(train_matrix)
 
-elif _model == "NN":
-	train_dists = preprocessing.samples_to_dists(train_samples, _section_filter, get_section)
-	test_dists = preprocessing.samples_to_dists(test_samples, _section_filter, get_section)
-	model = Neural_Network(_n_factors = train_matrix.shape[1], _learning_rate = _learning_rate, _hidden_nodes = _hidden_nodes, _last_layer = len(_section_filter))
-	print("Training.. ")
-	model.train(train_matrix, train_dists, test_matrix, test_dists)
-	predict = model.predict(test_matrix)
-	predict = preprocessing.dists_to_labels(predict, _section_filter)
-	test_labels = preprocessing.samples_to_label(test_samples, _section_filter)
+# count[i, j]: for the ith cluster, how many texts belong to the jth section
+count = np.zeros(len(_section_filter, _section_filter))
+for i in range(reference_output.shape[0]):
+	j = _section_filter.index(get_section(train_texts[i]))
+	count[i, j] += 1 
 
-else:
-	raise Exception("Unknown model flag '%s'"%str(_model))
+cluster_section_map = count.arg_max(axis = 1)
 
-accuracy = np.mean(predict == test_labels)
+test_predict = kmeans.predict(test_matrix)
+for i in range(test_predict.shape[0]):
+	test_predict[i] = cluster_section_map[test_predict[i]]
+
+accuracy = np.mean(test_predict == test_labels)
 
 print("accuracy %.3f"%accuracy)
