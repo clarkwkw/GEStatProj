@@ -17,7 +17,8 @@ _strategy_parameters = {
 	"words_src": "samples",
 	"reduction": "lsa",
 	"reduce_n_attr": 50,
-	"normalize_flag": False
+	"normalize_flag": False,
+	"stem_words": False
 }
 
 _svm_parameters = {

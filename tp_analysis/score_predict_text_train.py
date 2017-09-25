@@ -9,6 +9,7 @@ _sample_folder = "./samples"
 _model_folder = "./output"
 _model_type = "SVM"
 _name_filter = ["KK201617T1", "KK201617T2"]
+#_name_filter = ["SZ201617T1"]
 
 # Preprocessing Parameters
 _attributes = 50
@@ -20,11 +21,12 @@ _strategy_parameters = {
 	"selection": 'tfidf',
 	"select_top": 1000,
 	"select_bottom": 0,
-	"words_src": "textbook",
+	"words_src": "samples",
 	"tb_chs": ["1a", "1b", "2", "3a", "3b", "4", "5", "6", "7", "8", "9", "10a", "10b", "11a"],
 	"reduction": "lsa",
 	"reduce_n_attr": 50,
-	"normalize_flag": False
+	"normalize_flag": False,
+	"stem_words": True
 }
 _svm_parameters = {
 }
@@ -57,7 +59,7 @@ def main(run = 1, force_run = False):
 		samples = preprocessing.tp_sample.get_samples(_sample_folder)
 		if _name_filter is not None:
 			samples = [s for s in samples if s.batch_name in _name_filter]
-		#print(np.var([get_label(s) for s in samples]))
+		print(np.var([get_label(s) for s in samples]))
 		random.shuffle(samples)
 		batches = preprocessing.batch_data(samples, cross_valid)
 		for i in range(cross_valid):

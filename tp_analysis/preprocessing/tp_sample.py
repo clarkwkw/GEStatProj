@@ -16,7 +16,7 @@ def get_samples(sample_folder):
 			try:
 				samples.append(TPSample(sample_folder + '/' + file))
 			except:
-				print("Cannot read news sample %s"%name)
+				print("Cannot read sample %s"%name)
 	return samples
 
 class TPSample:

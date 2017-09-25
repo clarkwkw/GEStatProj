@@ -1,8 +1,15 @@
 import json
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA
+from sklearn.decomposition import PCA, TruncatedSVD, IncrementalPCA, SparsePCA
 import textbook
+import nltk.stem
+
+stemmer = nltk.stem.SnowballStemmer('english')
+class StemmedTfidfVectorizer(TfidfVectorizer):
+	def build_analyzer(self):
+		analyzer = super(StemmedTfidfVectorizer, self).build_analyzer()
+		return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
 
 def batch_data(series, batch_count):
 	length = len(series)
@@ -17,7 +24,7 @@ def batch_data(series, batch_count):
 		start = end
 	return arr
 
-def by_predefined_words(train_texts, valid_texts = [], words = None):
+def by_predefined_words(train_texts, valid_texts = [], words = None, force_dense = True):
 	vocabs = {}
 	if words is None:
 		words = textbook.getTopVocabs("all", 30)
@@ -26,8 +33,12 @@ def by_predefined_words(train_texts, valid_texts = [], words = None):
 		vocabs[words[i]] = i
 	vectorizer = CountVectorizer(vocabulary = vocabs)
 
-	train_matrix = vectorizer.transform(train_texts).todense()
-	valid_matrix = vectorizer.transform(valid_texts).todense()
+	train_matrix = vectorizer.transform(train_texts)
+	valid_matrix = vectorizer.transform(valid_texts)
+
+	if force_dense:
+		train_matrix, valid_matrix = train_matrix.todense(), valid_matrix.todense()
+
 	return (train_matrix, valid_matrix, words)
 
 def normalize(train_matrix, valid_matrix = None, norm_info = None):
@@ -79,7 +90,7 @@ def normalize(train_matrix, valid_matrix = None, norm_info = None):
 #
 # Other parameters:
 #	save_dir: string/ None, save preprocessing settings to the specified directory if not None
-def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng = (1,1), words_src = None, tb_chs = None, selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, savedir = None):
+def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng = (1,1), words_src = None, tb_chs = None, selection = None, select_top = 0, select_bottom = 0, reduction = None, reduce_n_attr = None, stem_words = False, savedir = None):
 	vectorizer, vect_texts = None, None
 	if type(words_src) is list:
 		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, words_src)
@@ -89,7 +100,10 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng 
 			vectorizer = textbook.getTfidfVectorizer(ngram_rng, chs = tb_chs)
 		elif words_src == "samples":
 			vect_texts = train_texts
-			vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
+			if stem_words:
+				vectorizer = StemmedTfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
+			else:
+				vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
 			vectorizer.fit(train_texts)
 		else:
 			raise Exception("Unexpected value for 'words_src'")
@@ -120,7 +134,7 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng 
 			raise Exception("Must specify 'select_top'/'select_bottom' when 'selection' is not None")
 
 		selected_words = [tup[0] for tup in selected_tuples]
-		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, selected_words)
+		train_matrix, valid_matrix, words = by_predefined_words(train_texts, valid_texts, selected_words, force_dense = reduction not in ["lsa"])
 		
 	pca_components, norm_info = None, None
 	reductor = None

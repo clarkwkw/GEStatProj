@@ -2,6 +2,7 @@ import os
 import html
 import json
 from multiprocessing import Pool as ThreadPool
+import random
 
 def get_samples(sample_folder):
 	try:
@@ -13,13 +14,16 @@ def get_samples(sample_folder):
 	
 	return __get_samples_by_paths(files)
 
-def get_samples_multithread(sample_folder, n_thread):
+def get_samples_multithread(sample_folder, n_thread, random_k = None):
 	try:
 		files = os.listdir(sample_folder)
 		files = [sample_folder + "/" + file for file in files]
 	except FileNotFoundError:
 		print("Folder '%s' does not exist, abort."%sample_folder)
 		exit(-1)
+
+	if type(random_k) is int:
+		files = random.sample(files, random_k)
 
 	jobs = []
 	start_index, end_index = 0, 0
