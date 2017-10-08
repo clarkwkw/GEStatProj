@@ -11,6 +11,11 @@ class StemmedTfidfVectorizer(TfidfVectorizer):
 		analyzer = super(StemmedTfidfVectorizer, self).build_analyzer()
 		return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
 
+class StemmedCountVectorizer(CountVectorizer):
+	def build_analyzer(self):
+		analyzer = super(StemmedCountVectorizer, self).build_analyzer()
+		return lambda doc: ([stemmer.stem(w) for w in analyzer(doc)])
+
 def batch_data(series, batch_count):
 	length = len(series)
 	batch_size = length // batch_count
@@ -105,6 +110,8 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng 
 			else:
 				vectorizer = TfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
 			vectorizer.fit(train_texts)
+		elif isinstance(words_src, TfidfVectorizer):
+			vectorizer = words_src
 		else:
 			raise Exception("Unexpected value for 'words_src'")
 
