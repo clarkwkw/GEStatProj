@@ -7,9 +7,9 @@ _essays_dir = "./samples"
 _n_key_vocabs = 1000
 _ngram_rng = (1, 3)
 
-_save_dir = "./output"
+_save_dir = "./output/SVM"
 
-_news_dir = "./news_crawler/guardian/texts"
+_news_dir = "./news_crawler/guardian/old/texts"
 _model = "SVM"
 _min_word_count = 400
 _train_ratio = 0.8
@@ -25,14 +25,15 @@ _max_iter = 100000
 _valid_step = 100
 _hidden_nodes = [20]
 
-_section_filter = ["education", "science", "technology", "higher-education-network", "environment", "global-development"]
+_section_filter = ["business", "education", "science", "technology", "higher-education-network", "environment", "global-development"]
 _section_group_map = {
 	"education": "education",
 	"science": "science & technology",
 	"technology": "science & technology",
 	"higher-education-network": "education",
 	"environment": "environment",
-	"global-development": "global-development"
+	"global-development": "global-development",
+	"business": "business"
 }
 
 def get_section(sample):

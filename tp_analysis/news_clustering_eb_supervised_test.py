@@ -7,9 +7,9 @@ import random
 import tensorflow as tf
 
 _essay_folder = "./samples"
-_model = "./output"
+_model = "./output/SVM"
 _type = "SVM"
-_grouped_sections = ["education", "science & technology", "environment", "global-development"]
+_grouped_sections = ['education', 'science & technology', 'environment', 'global-development', 'business']
 _words = []
 _norm_dict = None
 pca_components = None
@@ -33,18 +33,16 @@ if _norm_dict is not None:
 if _type == "NN":
 	model = models.Neural_Network.load(_model)
 	result = model.predict(test_matrix)
-	preprocessing.dists_to_labels(result, _grouped_sections)
+	result = preprocessing.dists_to_labels(result, _grouped_sections)
 
 else:
 	model = models.SVR.load(_model)
 	result = model.predict(test_matrix)
 	
-_result_count = {}
+_result_count = {s: 0 for s in _grouped_sections}
 for i in range(result.shape[0]):
 	section = _grouped_sections[int(result[i])]
-	if section not in _result_count:
-		_result_count[section] = 1
-	else:
-		_result_count[section] += 1
+	print("%s\t%s"%(samples[i].get_identifier(), section))
+	_result_count[section] += 1
 
 print(_result_count)
