@@ -30,7 +30,6 @@ ggplot(data,aes(x=data[,2],y=Freq,fill=Outside.Class.Activity))+geom_bar(stat="i
   theme(plot.title = element_text(face="bold",size=24))
 dev.off()
 
-#mirror hist
 varname=paste("Q",18:35,sep = "")
 for(i in 1:ncol(part2to3))
 {
@@ -39,7 +38,31 @@ for(i in 1:ncol(part2to3))
   png(paste(varname[i],"mirrored hist",".png"))
   print(
     ggplot(data,aes(x=data[,2],y=Freq,fill=Outside.Class.Activity))+geom_bar(stat="identity",position = "identity")+
-      labs(x=varname[i],y="Frequency",fill=varname[1])+
+      labs(x=varname[i],y="Frequency",fill="Outside Class Activity")+
+      scale_y_continuous(labels=abs)+
+      coord_flip()+
+      ggtitle(varname[i])+
+      theme(plot.title = element_text(face="bold",size=24)))
+  dev.off()
+}
+
+varname=names(grade)
+for(i in 1:ncol(grade))
+{
+  if(i==2)
+  {
+    data=as.data.frame(table(cbind(demographic[,1,drop=F],grade[,i,drop=F])))
+    data$Freq[which(data$Outside.Class.Activity=="OD")]=-1*data$Freq[which(data$Outside.Class.Activity=="OD")]
+  }
+  else
+  {
+    data=as.data.frame(table(cbind(demographic[,1,drop=F],cut(grade[,i],1:12/12*4))))
+    data$Freq[which(data$Outside.Class.Activity=="OD")]=-1*data$Freq[which(data$Outside.Class.Activity=="OD")]
+  }
+  png(paste(varname[i],"mirrored hist",".png"))
+  print(
+    ggplot(data,aes(x=data[,2],y=Freq,fill=Outside.Class.Activity))+geom_bar(stat="identity",position = "identity")+
+      labs(x=varname[i],y="Frequency",fill="Outside Class Activity")+
       scale_y_continuous(labels=abs)+
       coord_flip()+
       ggtitle(varname[i])+
