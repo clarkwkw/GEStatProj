@@ -5,7 +5,8 @@ import json
 import logging
 import utils
 
-_sections = ["education", "science", "technology", "higher-education-network", "environment", "global-development"]
+#_sections = ["education", "science", "technology", "higher-education-network", "environment", "global-development"]
+_sections = ["business"]
 _base_url = "https://content.guardianapis.com/search"
 _page_size = 50
 

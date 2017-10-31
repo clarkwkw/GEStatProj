@@ -5,7 +5,7 @@ import numpy as np
 
 _essays_dir = "./samples"
 _n_key_vocabs = 1000
-_ngram_rng = (1, 3)
+_ngram_rng = (1, 1)
 
 _save_dir = "./output/SVM"
 
@@ -25,7 +25,7 @@ _max_iter = 100000
 _valid_step = 100
 _hidden_nodes = [20]
 
-_section_filter = ["business", "education", "science", "technology", "higher-education-network", "environment", "global-development"]
+_section_filter = ["business", "education", "science", "technology", "higher-education-network", "environment", "global-development", "culture", "politics"]
 _section_group_map = {
 	"education": "education",
 	"science": "science & technology",
@@ -33,7 +33,9 @@ _section_group_map = {
 	"higher-education-network": "education",
 	"environment": "environment",
 	"global-development": "global-development",
-	"business": "business"
+	"business": "business",
+	"culture": "culture",
+	"politics": "politics"
 }
 
 def get_section(sample):
@@ -58,7 +60,7 @@ def get_tfidfVectorizer_of_essay_top_tf_words():
 
 	chosen_words = []
 	while count < _n_key_vocabs and i < len(word_freq_pair):
-		if word_freq_pair[i][0].isalpha():
+		if word_freq_pair[i][0].replace(" ", "").isalpha():
 			count += 1
 			chosen_words.append(word_freq_pair[i][0])
 		i += 1

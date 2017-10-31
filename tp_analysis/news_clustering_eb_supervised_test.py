@@ -5,10 +5,11 @@ import os
 import preprocessing
 import random
 import tensorflow as tf
+import pandas
 
 _essay_folder = "./samples"
-_model = "./output/SVM"
-_type = "SVM"
+_model = "./output/NN"
+_type = "NN"
 _grouped_sections = ['education', 'science & technology', 'environment', 'global-development', 'business']
 _words = []
 _norm_dict = None
@@ -33,6 +34,9 @@ if _norm_dict is not None:
 if _type == "NN":
 	model = models.Neural_Network.load(_model)
 	result = model.predict(test_matrix)
+	df = pandas.DataFrame(preprocessing.dist_softmax(result.T).T)
+	df["name"] = [sample.get_identifier() for sample in samples]
+	df.to_csv("dist.csv", index = False)
 	result = preprocessing.dists_to_labels(result, _grouped_sections)
 
 else:

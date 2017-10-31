@@ -104,7 +104,7 @@ def getTopVocabs(ch, n = 30, ngram_rng = (1, 1)):
 	i, count = (0, 0)
 	while count < n and i < len(word_freq_pair):
 		#if word_freq_pair[i][0].isalpha() and len(word_freq_pair[i][0]) >= 3:
-		if word_freq_pair[i][0].isalpha():
+		if word_freq_pair[i][0].replace(" ", "").isalpha():
 			count += 1
 			yield word_freq_pair[i]
 		i += 1

@@ -2,6 +2,7 @@ import json
 import numpy as np
 import sklearn.svm as sk_svm
 from sklearn.externals import joblib
+from . import utils
 
 def cal_mse(y, y_):
 		return np.mean(np.square(y - y_))
@@ -14,14 +15,15 @@ class SVR:
 	def destroy(self):
 		pass
 
-	def train(self, train_matrix, train_labels, valid_matrix, valid_labels, **kwargs):
+	def train(self, train_matrix, train_labels, valid_matrix = None, valid_labels = None, **kwargs):
 		if self._trained:
 			raise Exception("Model already trained.")
 		self._model.fit(train_matrix, train_labels, **kwargs)
 		self._trained = True
 
-		valid_pred = self.predict(valid_matrix)
-		return cal_mse(valid_pred, valid_labels)
+		if valid_matrix is not None and valid_labels is not None:
+			valid_pred = self.predict(valid_matrix)
+			return cal_mse(valid_pred, valid_labels)
 
 	def predict(self, matrix, **kwargs):
 		if not self._trained:
@@ -32,6 +34,7 @@ class SVR:
 	def save(self, savedir):
 		if not self._trained:
 			raise Exception("Model not trained.")
+		utils.ensure_dir_exist(savedir)
 		joblib.dump(self._model, savedir+'/model.pkl')
 
 	@staticmethod
@@ -64,6 +67,7 @@ class SVM:
 	def save(self, savedir):
 		if not self._trained:
 			raise Exception("Model not trained.")
+		utils.ensure_dir_exist(savedir)
 		joblib.dump(self._model, savedir+'/model.pkl')
 
 	@staticmethod

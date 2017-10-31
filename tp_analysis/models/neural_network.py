@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import signal
 import tensorflow as tf
+from . import utils
 
 _multi_thread = 8
 _forced_quit = False
@@ -114,6 +115,7 @@ class Neural_Network:
 	def save(self, savedir):
 		if not self._trained:
 			raise Exception("Model not trained.")
+		utils.ensure_dir_exist(savedir)
 		with self._graph.as_default() as g:
 			saver = tf.train.Saver()
 			save_path = saver.save(self._sess, save_path = savedir+'/model.ckpt')
