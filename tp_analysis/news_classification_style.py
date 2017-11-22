@@ -11,7 +11,7 @@ _save_dir = "./output/SVM"
 
 _news_dir = "./news_crawler/guardian/texts"
 _model = "SVM"
-_min_word_count = 400
+_word_count_cutoff = 400
 _train_ratio = 0.8
 _max_thread = 4
 _reduction = None
@@ -25,21 +25,13 @@ _max_iter = 100000
 _valid_step = 100
 _hidden_nodes = [20]
 
-_section_filter = ["business", "education", "science", "technology", "higher-education-network", "environment", "global-development", "culture", "politics"]
-_section_group_map = {
-	"education": "education",
-	"science": "science & technology",
-	"technology": "science & technology",
-	"higher-education-network": "education",
-	"environment": "environment",
-	"global-development": "global-development",
-	"business": "business",
-	"culture": "culture",
-	"politics": "politics"
-}
+_sections = ["news", "short_texts"]
 
 def get_section(sample):
-	return sample.section
+	if sample.word_count >= _word_count_cutoff:
+		return "news"
+
+	return "short_texts"
 
 def get_tfidfVectorizer_of_essay_top_tf_words():
 	essays = preprocessing.tp_sample.get_samples(_essays_dir)
@@ -73,18 +65,11 @@ print("Reading samples.. ")
 news_samples = preprocessing.news_sample.get_samples_multithread(_news_dir, _max_thread, _max_sample_count)
 
 print("Preprocessing.. ")
-news_samples = [sample for sample in news_samples if sample.word_count >= _min_word_count and sample.section in _section_filter]
+news_samples = [sample for sample in news_samples if sample.word_count > 0]
 
 random.shuffle(news_samples)
 n_samples = len(news_samples)
-_sections = _section_filter
-if _section_group_map is not None:
-	_sections = {section: True for section in _section_group_map.values()}
-	_sections = list(_sections.keys())
-	print("Grouped sections:", _sections)
-	for sample in news_samples:
-		sample.section = _section_group_map[sample.section]
-	
+
 train_samples = news_samples[0:int(n_samples*_train_ratio)]
 test_samples = news_samples[int(n_samples*_train_ratio):n_samples]
 

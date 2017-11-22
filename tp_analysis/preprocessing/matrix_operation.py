@@ -102,7 +102,11 @@ def preprocess(train_texts, valid_texts = [], normalize_flag = False, ngram_rng 
 	else:
 		if words_src == "textbook":
 			vect_texts = textbook.getOrderedText(chs = tb_chs)
-			vectorizer = textbook.getTfidfVectorizer(ngram_rng, chs = tb_chs)
+			if stem_words:
+				vectorizer = textbook.getTfidfVectorizer(ngram_rng, chs = tb_chs)
+			else:
+				vectorizer = StemmedTfidfVectorizer(ngram_range = ngram_rng, stop_words = 'english')
+				vectorizer.fit(textbook.getOrderedText(tb_chs))
 		elif words_src == "samples":
 			vect_texts = train_texts
 			if stem_words:
