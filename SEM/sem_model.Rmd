@@ -1,0 +1,261 @@
+---
+title: "SEM Model"
+output: pdf_document
+date: "`r format(Sys.time(), '%d %B %Y')`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(lavaan)
+library(semPlot)
+
+opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+## Functions for converting responses to numbers
+```{r conversion functions}
+# for (course) Grade
+GradePoint <- function(x) {
+  case_when(
+    x == "A" ~ 4.0,
+    x == "A-" ~ 3.7,
+    x == "B+" ~ 3.3,
+    x == "B" ~ 3.0,
+    x == "B-" ~ 2.7,
+    x == "C+" ~ 2.3,
+    x == "C" ~ 2.0,
+    x == "C-" ~ 1.7,
+    x == "D+" ~ 1.3,
+    x == "D" ~ 1.0,
+    x == "F" ~ 0.0,
+    TRUE ~ NA_real_
+  )
+}
+
+# for Q18, Q19
+TextRead <- function(x) {
+  case_when(
+    x == "0 to 1" ~ 0.5,
+    x == "2 to 3" ~ 2.5,
+    x == "4 to 5" ~ 4.5,
+    x == "6 to 7" ~ 6.5,
+    x == "8 to 9" ~ 8.5,
+    x == "10 to 11" ~ 10.5,
+    x == "12" ~ 12,
+    TRUE ~ NA_real_
+  )
+}
+
+# for Q20
+RJTime <- function(x) {
+  case_when(
+    x == "less than 1" ~ 0.5,
+    x == "1 to <3" ~ 2,
+    x == "3 to <6" ~ 4.5,
+    x == "6 to <10" ~ 8,
+    x == "10 to <15" ~ 12.5,
+    x == "more than 15" ~ 18,
+    TRUE ~ NA_real_
+  )
+}
+
+# for Q21
+TextEach <- function(x) {
+  case_when(
+    x == "less than 1" ~ 0.5,
+    x == "1 to <2" ~ 1.5,
+    x == "2 to <3" ~ 2.5,
+    x == "3 to <4" ~ 3.5,
+    x == "4 to <5" ~ 4.5,
+    x == "more than 5" ~ 5.5,
+    TRUE ~ NA_real_
+  )
+}
+
+# for Q22, Q23
+Attend <- function(x) {
+  case_when(
+    x == "0%" ~ 0,
+    x == "1-20%" ~ 0.1,
+    x == "21-40%" ~ 0.3,
+    x == "41-60%" ~ 0.5,
+    x == "61-80%" ~ 0.7,
+    x == "81-100%" ~ 0.9,
+    TRUE ~ NA_real_
+  )
+}
+
+EngGood <- function(x) {
+  case_when(
+    is.na(x) ~ NA_real_,
+    x %in% c("DSE", "Others") ~ NA_real_,
+
+    x %in% c(
+      "DSE 5 or above",
+      "JiangSu Exam >=105",
+      "National Exam >=140",
+      "Taiwan Exam >=15"
+    ) ~ 1,
+    TRUE ~ 0
+  )
+}
+```
+
+## Read Data
+After reading data, extract useful columns and renaming them.
+```{r read data, message=FALSE}
+rawdata <- read_csv("RawData/201617MasterData 2018-03-07.csv",
+  na = c("BLANK", "NA", "MULT", "#VALUE!", "(4,6)", "", "ERROR #3100", "#N/A")
+)
+
+uge <- rawdata %>%
+  mutate(
+    # background
+    EngGood = EngGood(`English Proficiency`),
+    FacSci = Faculty %in% c("BASCI", "ENF", "ENSCF", "SCF", "MED"),
+    # Effort
+    TextRead = TextRead(`Q18 (Assigned Text Read Completely)`),
+    RJTime = RJTime(`Q20 (Time/RJ)`),
+    TextTimeEach = TextEach(`Q21 (Time/reading)`),
+    Lecture = 13 * Attend(`Q22 (% Lecture)`),
+    Tutorial = 13 * Attend(`Q23 (% tutorial participation)`),
+    ReadTime = TextRead * TextTimeEach,
+    # Grade
+    GradePoint = GradePoint(Grade)
+  ) %>%
+  select(
+    Sex,
+    SciSubj = `ScienceSubject (Phy,Chem,Bio,InterSci,CombSci)`,
+    EngGood,
+    Faculty,
+    FacSci,
+    matches("Before|After"),
+    matches("Change"),
+    TextRead:ReadTime,
+    GradePoint
+  )
+
+colnames(uge) <- str_replace(colnames(uge), "(Q\\d*|cGPA)\\s*\\(\\s*Before\\s*\\)", "\\1Entry")
+colnames(uge) <- str_replace(colnames(uge), "(Q\\d*|cGPA)\\s*\\(\\s*After\\s*\\)", "\\1Exit")
+colnames(uge) <- str_replace(colnames(uge), "(Q\\d*)\\s*\\(\\s*Change\\s*\\)", "\\1Change")
+
+```
+
+## Find backgrounds associated with factors
+Factors are grouped according to previous years' finding via factor analysis. Backgrounds are chosen based on their correlations with factors before putting them into the model.
+```{r find association, warning=FALSE}
+uge %>% with({
+  f1 <- (Q1Exit + Q3Exit + Q4Exit + Q5Exit) / 4
+  f2 <- (Q6Exit + Q7Exit + Q8Exit) / 3
+  f3 <- (Q9Exit + Q10Exit + Q11Exit + Q12Exit) / 4
+  f4 <- (Q13Exit + Q15Exit) / 2
+  f5 <- (Q2Exit + Q14Exit + Q16Exit + Q17Exit) / 4
+
+  SexM <- recode(Sex, "F" = 0, "M" = 1)
+
+
+  # boxplot of factor vs sex
+  print(
+    tibble(f1, f2, f3, f4, f5, Sex) %>%
+      filter(!is.na(Sex)) %>% # 3 NA case only
+      gather("factor", "value", -Sex) %>%
+      ggplot(aes(Sex, value)) +
+      geom_boxplot() +
+      facet_grid(. ~ factor)
+  )
+
+  # boxplot of factor vs English Pro
+  print(
+    tibble(f1, f2, f3, f4, f5, EngGood = factor(EngGood)) %>%
+      gather("factor", "value", -EngGood) %>%
+      ggplot(aes(EngGood, value)) +
+      geom_boxplot() +
+      facet_grid(. ~ factor)
+  )
+
+  # boxplot of factor vs Science related faculty
+  print(
+    tibble(f1, f2, f3, f4, f5, FacSci) %>%
+      gather("factor", "value", -FacSci) %>%
+      ggplot(aes(FacSci, value)) +
+      geom_boxplot() +
+      facet_grid(. ~ factor)
+  )
+
+
+  tibble(f1, f2, f3, f4, f5, GradePoint, SciSubj, SexM, EngGood, FacSci) %>%
+    cor(use = "pair") %>%
+    # only show cor btw factors <-> Grade,backgrounds
+    .[1:6, -(1:5)]
+})
+```
+
+## The SEM Model
+### Specify the model
+```{r model}
+sem.model <- '
+  # latent variables
+    F1Exit =~ Q1Exit + Q3Exit + Q4Exit + Q5Exit
+    F2Exit =~ Q6Exit + Q7Exit + Q8Exit
+    F3Exit =~ Q9Exit + Q10Exit + Q11Exit + Q12Exit
+    F4Exit =~ Q13Exit + Q15Exit
+    F5Exit =~ Q2Exit + Q14Exit + Q16Exit + Q17Exit
+    
+    Effort =~ ReadTime + RJTime + Lecture + Tutorial
+    
+    Academic =~ GradePoint
+
+  # regressions (outcome ~ background + effort + other latent var)
+    Academic ~ EngGood + Effort + F1Exit + F5Exit
+    F1Exit ~ EngGood + Effort
+    F2Exit ~ SciSubj + FacSci + Effort
+    F3Exit ~ SciSubj + FacSci + Effort + F2Exit
+    F4Exit ~ Effort + F5Exit
+    F5Exit ~ Effort
+'
+```
+
+### Fit model
+The model is fitted and accessed based on CFI and TLI, where a value of 0.9 indicates acceptable fit.
+```{r fit model}
+sem.fit <- sem(sem.model, data = uge, std.lv = TRUE, missing = "fiml")
+(cfi <- fitMeasures(sem.fit, fit.measures = "CFI")) # >.9 okay fit
+```
+In this case, the value of CFI is `r round(cfi, 2)`, which is close to 0.9.
+
+```{r other summary, include=FALSE}
+# inspect(sem.fit, 'cor.lv')
+# varTable(sem.fit)
+# summary(sem.fit, fit.measures=TRUE, standardized=TRUE)
+# parameterEstimates(sem.fit, standardized=TRUE)
+```
+
+### Factor loading Table
+```{r factor loading table}
+# nicer table, show composition of factors
+parameterEstimates(sem.fit, standardized = TRUE) %>%
+  filter(op %in% "=~") %>%
+  select("Latent Factor" = lhs, Indicator = rhs, B = est, SE = se, 
+         Z = z, "p-value" = pvalue, Beta = std.all) %>%
+  kable(digits = 3, format = "pandoc", caption = "Factor Loadings")
+```
+
+### Regression Table
+```{r Regression Table}
+# nicer table, show regression of latent variables on measurements/other latent variables
+parameterEstimates(sem.fit, standardized = TRUE) %>%
+  filter(op %in% "~") %>%
+  select("Latent Factor" = lhs, Predictor = rhs, B = est, SE = se, 
+         Z = z, "p-value" = pvalue, Beta = std.all) %>%
+  kable(digits = 3, format = "pandoc", caption = "Regression")
+```
+
+### Plot Model
+```{r plot model}
+semPaths(sem.fit, rotation=2,
+         residuals = FALSE, exoCov = FALSE, exoVar = FALSE, intercepts = FALSE,
+         nCharNodes = 0, font=4, label.cex=2, asize=1.5,
+         sizeLat = 5, sizeMan = 8, sizeMan2 =3)
+```
+For a better image, see the file `semplot.png`.
