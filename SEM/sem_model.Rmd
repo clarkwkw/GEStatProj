@@ -217,7 +217,7 @@ sem.model <- '
 ```
 
 ### Fit model
-The model is fitted and accessed based on CFI and TLI, where a value of 0.9 indicates acceptable fit.
+The model is fitted and accessed based on CFI, where a value of 0.9 indicates acceptable fit.
 ```{r fit model}
 sem.fit <- sem(sem.model, data = uge, std.lv = TRUE, missing = "fiml")
 (cfi <- fitMeasures(sem.fit, fit.measures = "CFI")) # >.9 okay fit
